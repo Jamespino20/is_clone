@@ -1,29 +1,29 @@
 [
     {
-        "id": "u_68dc9030ee94e4.57271262",
-        "username": "James Bryant Espino",
+        "name": "James Bryant Espino",
         "email": "espino.jamesbryant20+admin@gmail.com",
-        "password_hash": "$2y$10$pxFL0I\/AeK3jWY2gkgQn9.FSvfi8eADXLpm.izNUcEgYeTR59CA6O",
+        "password": "$2y$10$gr.bTH7oEfz2HqWsuzTgkehJTTOAg.CaqZc0cbFxtC78kIHvpVX\/q",
         "role": "admin",
-        "totp_secret": "QPWF7NVFCMYJ7W5V",
-        "2fa_enabled": true
+        "created": 1759316342,
+        "totp_secret": "D4O74C2AFQ6D23D4",
+        "sessions": []
     },
     {
-        "id": "u_68dc9ca979a351.46345086",
-        "username": "Roger Cruz Vasallo",
+        "name": "James Bryant Espino",
         "email": "espino.jamesbryant20+teacher@gmail.com",
-        "password_hash": "$2y$10$l60puFSRJNKvyimFVTe3ZuRjCFvWq4Xd.mo.sjcIIWICCRq7tqc5.",
+        "password": "$2y$10$axzgLsgx3xCDlxcITOmZh.c9DDx88It4tyBoyDk2WIZkP6o5EOY02",
         "role": "teacher",
-        "totp_secret": "F3X2OF4JAPORXUXL",
-        "2fa_enabled": true
+        "created": 1759320710,
+        "totp_secret": "JT3PZCESA7KRIUCR",
+        "sessions": []
     },
     {
-        "id": "u_68dc9d5a6b44c6.02413597",
-        "username": "John Carlo Pari\u00f1as",
+        "name": "James Bryant Espino",
         "email": "espino.jamesbryant20+students@gmail.com",
-        "password_hash": "$2y$10$ftDkr19V4vB2X83hw3m6N.HrwRC961FFztpiHPt3tSoIF9wRVD9L.",
+        "password": "$2y$10$mlJhzIbdWgRj4sZNjKeUn.cU1oVvl\/mJnADaF6uHYPq0GAbNUl2iW",
         "role": "student",
-        "totp_secret": "4H4SZSLOMERMOAPS",
-        "2fa_enabled": true
+        "created": 1759320768,
+        "totp_secret": "HBZ6RMV4WXTG3DQQ",
+        "sessions": []
     }
 ]

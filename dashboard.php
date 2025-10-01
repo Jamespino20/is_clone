@@ -1,52 +1,48 @@
 <?php
 session_start();
 require_once __DIR__ . '/api/helpers.php';
-if(empty($_SESSION['user_id'])){
-    header('Location: /dsa-school/');
-    exit;
-}
-$user = find_user('id', $_SESSION['user_id']);
-if(!$user){ header('Location: /dsa-school/'); exit; }
-$role = $user['role'];
+if(empty($_SESSION['user_email'])){ header('Location: index.php'); exit; }
+$user = find_user_by_email($_SESSION['user_email']);
+if(!$user){ header('Location: index.php'); exit; }
 ?>
 <!doctype html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Dashboard — <?php echo htmlspecialchars($user['username']); ?></title>
-  <link rel="stylesheet" href="assets/css/style.css" />
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1">
+	<title>Dashboard - <?=htmlspecialchars($user['name'])?></title>
+	<link rel="stylesheet" href="assets/css/style.css">
+  <script src="assets/js/app.js"></script>
 </head>
 <body>
-  <main class="container">
-    <h1>Dashboard</h1>
-    <p>Welcome, <strong><?php echo htmlspecialchars($user['username']); ?></strong> (<?php echo htmlspecialchars($role); ?>)</p>
+	<main class="container">
+		<div class="card">
+			<h1>Welcome, <?=htmlspecialchars($user['name'])?></h1>
+			<p>Role: <strong><?=htmlspecialchars($user['role'])?></strong></p>
+			<p>Email: <?=htmlspecialchars($user['email'])?></p>
+			<div style="margin-top:12px">
+				<button id="logoutBtn">Logout</button>
+			</div>
+		</div>
 
-    <section class="card">
-      <h2>Modules</h2>
-      <ul>
-        <?php if($role === 'admin'): ?>
-          <li>Manage Users</li>
-          <li>School Settings</li>
-        <?php endif; ?>
-        <?php if(in_array($role, ['teacher','admin'])): ?>
-          <li>Gradebook</li>
-          <li>Class Management</li>
-        <?php endif; ?>
-        <?php if(in_array($role, ['student','admin'])): ?>
-          <li>My Classes</li>
-          <li>Assignments</li>
-        <?php endif; ?>
-      </ul>
-    </section>
-
-    <section class="card">
-      <h2>Account</h2>
-      <p>Email: <?php echo htmlspecialchars($user['email']); ?></p>
-      <p>2FA: <?php echo !empty($user['2fa_enabled']) ? 'Enabled' : 'Disabled'; ?></p>
-      <p><a href="api/logout.php">Logout</a></p>
-    </section>
-
-  </main>
+		<div class="card">
+			<h2>Modules</h2>
+			<ul>
+				<?php if($user['role']==='admin'): ?>
+					<li>Admin Console</li>
+					<li>User Management</li>
+				<?php endif; ?>
+				<?php if($user['role']==='teacher'): ?>
+					<li>Classroom</li>
+					<li>Grades</li>
+				<?php endif; ?>
+				<?php if($user['role']==='student'): ?>
+					<li>My Courses</li>
+					<li>Assignments</li>
+				<?php endif; ?>
+			</ul>
+		</div>
+	</main>
 </body>
 </html>
+

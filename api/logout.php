@@ -1,12 +1,20 @@
 <?php
 session_start();
 $_SESSION = [];
-if(ini_get('session.use_cookies')){
+if (ini_get('session.use_cookies')) {
     $params = session_get_cookie_params();
     setcookie(session_name(), '', time() - 42000,
-        $params['path'], $params['domain'], $params['secure'], $params['httponly']
+        $params['path'], $params['domain'],
+        $params['secure'], $params['httponly']
     );
 }
 session_destroy();
-header('Location: http://localhost/DSA_Finals/dsa-school/');
-exit;
+header('Content-Type: application/json');
+echo json_encode(['ok'=>true]);
+
+if (php_sapi_name() !== 'cli' && empty($_SERVER['HTTP_X_REQUESTED_WITH'])) {
+    header('Location: ../index.php');
+    exit;
+}
+
+?>

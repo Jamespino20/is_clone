@@ -1,29 +1,20 @@
 <?php
 require_once __DIR__ . '/helpers.php';
 header('Content-Type: application/json');
-$body = json_decode(file_get_contents('php://input'), true);
-$code = trim($body['code'] ?? '');
-$remember = !empty($body['remember']);
-if($code === '') exit(json_encode(['success'=>false,'error'=>'Missing code']));
-if(empty($_SESSION['pending_2fa_user'])) exit(json_encode(['success'=>false,'error'=>'No pending 2FA session']));
-$uid = $_SESSION['pending_2fa_user'];
-$user = find_user('id', $uid);
-if(!$user) exit(json_encode(['success'=>false,'error'=>'User not found']));
-
-if(verify_totp($user['totp_secret'], $code, 1, 30)){
-    // success: set session and remember duration if requested
-    $_SESSION['user_id'] = $user['id'];
-    $_SESSION['role'] = $user['role'];
-    unset($_SESSION['pending_2fa_user']);
-    touch_session();
-    if($remember){
-        // remember for 30 days
-        set_remember_duration(30 * 24 * 3600);
-    } else {
-        // default 7 days inactivity
-        set_remember_duration(7 * 24 * 3600);
-    }
-    echo json_encode(['success'=>true]);
-} else {
-    echo json_encode(['success'=>false,'error'=>'Invalid 2FA code']);
+session_start();
+$code = $_POST['code'] ?? '';
+$temp = $_POST['temp_token'] ?? '';
+if(empty($_SESSION['temp_token']) || empty($_SESSION['temp_user_email']) || $_SESSION['temp_token']!==$temp){ echo json_encode(['ok'=>false,'error'=>'Invalid temp token']); exit; }
+$email = $_SESSION['temp_user_email'];
+$user = find_user_by_email($email);
+if(!$user){ echo json_encode(['ok'=>false,'error'=>'User not found']); exit; }
+if(empty($user['totp_secret'])){ echo json_encode(['ok'=>false,'error'=>'2FA not set up for this user']); exit; }
+if(!totp_verify($user['totp_secret'], $code)){
+	echo json_encode(['ok'=>false,'error'=>'Invalid or expired 2FA code']); exit;
 }
+// Success: promote to session
+$_SESSION['user_email'] = $email;
+unset($_SESSION['temp_token'], $_SESSION['temp_user_email']);
+echo json_encode(['ok'=>true]);
+
+?>

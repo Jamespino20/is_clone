@@ -1,145 +1,68 @@
 <?php
-// helpers.php - user storage and TOTP helpers
-// ensure server timezone (adjust as needed)
-date_default_timezone_set('Asia/Manila');
-
-// tighten session cookie settings before starting session
-ini_set('session.use_strict_mode', 1);
-$secure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
-session_set_cookie_params([
-    'lifetime' => 0,
-    'path' => '/',
-    'domain' => $_SERVER['HTTP_HOST'] ?? '',
-    'secure' => $secure,
-    'httponly' => true,
-    'samesite' => 'Lax'
-]);
-session_start();
-
-define('DATA_FILE', __DIR__ . '/../data/users.json');
-
-function load_users(){
-    if(!file_exists(DATA_FILE)) file_put_contents(DATA_FILE, json_encode([]));
-    $raw = file_get_contents(DATA_FILE);
-    $arr = json_decode($raw, true);
-    if(!is_array($arr)) $arr = [];
-    return $arr;
+// --- TOTP (Google Authenticator) helpers ---
+function base32_encode($data) {
+    $alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+    $binary = '';
+    foreach (str_split($data) as $c) $binary .= sprintf('%08b', ord($c));
+    $pad = 5 - (strlen($binary) % 5);
+    if ($pad < 5) $binary .= str_repeat('0', $pad);
+    $out = '';
+    foreach (str_split($binary, 5) as $chunk) $out .= $alphabet[bindec($chunk)];
+    return $out;
 }
-
-function save_users($users){
-    file_put_contents(DATA_FILE, json_encode(array_values($users), JSON_PRETTY_PRINT));
+function totp_secret() {
+    return base32_encode(random_bytes(10));
 }
-
-// Session helpers ---------------------------------------------------------
-// update last activity timestamp for session
-function touch_session(){
-    $_SESSION['last_activity'] = time();
+function totp_otpauth_url($label, $secret, $issuer = 'DSA-School') {
+    $label = rawurlencode($label);
+    $issuer = rawurlencode($issuer);
+    return "otpauth://totp/{$issuer}:{$label}?secret={$secret}&issuer={$issuer}&algorithm=SHA1&digits=6&period=30";
 }
-
-// set the remembered session duration (seconds)
-function set_remember_duration($seconds){
-    $_SESSION['remember_duration'] = (int)$seconds;
-}
-
-// check if session has expired based on inactivity and remember duration
-function session_expired(){
-    if(empty($_SESSION['last_activity'])) return false;
-    $max_inactive = $_SESSION['remember_duration'] ?? (7 * 24 * 3600); // default 7 days
-    if(time() - $_SESSION['last_activity'] > $max_inactive) return true;
+function totp_verify($secret, $code, $window = 1) {
+    $tm = floor(time() / 30);
+    for ($i = -$window; $i <= $window; ++$i) {
+        if (totp_code($secret, $tm + $i) === $code) return true;
+    }
     return false;
 }
-
-
-function find_user($field, $value){
-    $users = load_users();
-    foreach($users as $u) if(isset($u[$field]) && $u[$field] === $value) return $u;
-    return null;
+function totp_code($secret, $tm = null) {
+    if ($tm === null) $tm = floor(time() / 30);
+    $key = base32_decode($secret);
+    $bin = pack('N*', 0) . pack('N*', $tm);
+    $hash = hash_hmac('sha1', $bin, $key, true);
+    $offset = ord($hash[19]) & 0xf;
+    $trunc = (ord($hash[$offset]) & 0x7f) << 24 |
+        (ord($hash[$offset + 1]) & 0xff) << 16 |
+        (ord($hash[$offset + 2]) & 0xff) << 8 |
+        (ord($hash[$offset + 3]) & 0xff);
+    return str_pad($trunc % 1000000, 6, '0', STR_PAD_LEFT);
 }
-
-function update_user($id, $changes){
-    $users = load_users();
-    foreach($users as &$u){
-        if($u['id'] === $id){
-            $u = array_merge($u, $changes);
-            save_users($users);
-            return $u;
-        }
-    }
-    return null;
-}
-
-function random_base32($length = 16){
-    $chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
-    $s = '';
-    for($i=0;$i<$length;$i++) $s .= $chars[random_int(0, strlen($chars)-1)];
-    return $s;
-}
-
-function base32_decode($b32){
+function base32_decode($b32) {
     $alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
     $b32 = strtoupper($b32);
-    $l = strlen($b32);
-    $bits = '';
-    for($i=0;$i<$l;$i++){
-        $val = strpos($alphabet, $b32[$i]);
-        if($val === false) continue;
-        $bits .= str_pad(decbin($val),5,'0',STR_PAD_LEFT);
+    $binary = '';
+    foreach (str_split($b32) as $c) {
+        $pos = strpos($alphabet, $c);
+        if ($pos === false) continue;
+        $binary .= sprintf('%05b', $pos);
     }
-    $bytes = '';
-    for($i=0;$i<strlen($bits);$i+=8){
-        $byte = substr($bits,$i,8);
-        if(strlen($byte) < 8) continue;
-        $bytes .= chr(bindec($byte));
+    $out = '';
+    foreach (str_split($binary, 8) as $chunk) {
+        if (strlen($chunk) < 8) continue;
+        $out .= chr(bindec($chunk));
     }
-    return $bytes;
+    return $out;
 }
-
-function hotp($secret, $counter, $digits=6){
-    $bin_counter = pack('J', $counter);
-    // pack('J') may not be available on 32-bit, use 64-bit manual
-    if(strlen($bin_counter) !== 8){
-        $bin_counter = '';
-        for($i=7;$i>=0;$i--) $bin_counter .= chr(($counter >> ($i*8)) & 0xFF);
-    }
-    $key = base32_decode($secret);
-    $hash = hash_hmac('sha1', $bin_counter, $key, true);
-    $offset = ord($hash[19]) & 0x0F;
-    $truncated = substr($hash, $offset, 4);
-    $code = unpack('N', $truncated)[1] & 0x7fffffff;
-    return str_pad($code % pow(10, $digits), $digits, '0', STR_PAD_LEFT);
-}
-
-function totp($secret, $timeSlice=null, $digits=6, $period=30){
-    if($timeSlice === null) $timeSlice = floor(time() / $period);
-    return hotp($secret, $timeSlice, $digits);
-}
-
-function verify_totp($secret, $code, $discrepancy = 1, $period=30){
-    $timeSlice = floor(time() / $period);
-    for($i=-$discrepancy;$i<=$discrepancy;$i++){
-        if(hash_equals(totp($secret, $timeSlice + $i, strlen($code), $period), $code)) return true;
-    }
-    return false;
-}
-
-function create_user($username, $email, $password, $role='student'){
-    $users = load_users();
-    // unique email or username
-    foreach($users as $u){
-        if($u['email'] === $email) return ['error'=>'Email already registered'];
-        if($u['username'] === $username) return ['error'=>'Username already taken'];
-    }
-    $id = uniqid('u_', true);
-    $hash = password_hash($password, PASSWORD_DEFAULT);
-    $secret = random_base32(16);
-    $user = ['id'=>$id,'username'=>$username,'email'=>$email,'password_hash'=>$hash,'role'=>$role,'totp_secret'=>$secret,'2fa_enabled'=>true];
-    $users[] = $user;
-    save_users($users);
-    return $user;
-}
-
-function authenticate_password($user, $password){
-    return password_verify($password, $user['password_hash']);
-}
-
+// Helpers for reading/writing JSON "db" and simple auth helpers
+define('DATA_DIR', __DIR__ . '/../data');
+function users_path(){ return DATA_DIR . '/users.json'; }
+function read_users(){ $p = users_path(); if(!file_exists($p)) return []; $j = file_get_contents($p); $a = json_decode($j,true); return is_array($a)?$a:[]; }
+function write_users($arr){ $p = users_path(); file_put_contents($p, json_encode($arr, JSON_PRETTY_PRINT)); }
+function find_user_by_email($email){ foreach(read_users() as $u) if(strtolower($u['email'])===strtolower($email)) return $u; return null; }
+function update_user($email,$new){ $users = read_users(); foreach($users as $i=>$u){ if(strtolower($u['email'])===strtolower($email)){ $users[$i] = array_merge($u,$new); write_users($users); return true; } } return false; }
+function add_user($user){ $users = read_users(); $users[] = $user; write_users($users); }
+function hash_password($pw){ return password_hash($pw, PASSWORD_DEFAULT); }
+function verify_password($pw,$hash){ return password_verify($pw,$hash); }
+function gen_token($len=40){ $bytes = random_bytes($len); return rtrim(strtr(base64_encode($bytes), '+/', '-_'), '='); }
+function gen_6digit(){ return str_pad(random_int(0,999999),6,'0',STR_PAD_LEFT); }
 ?>

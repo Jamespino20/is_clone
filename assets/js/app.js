@@ -1,146 +1,125 @@
-/*
-  Frontend helpers + modal UX
-  - Manual implementations of modal, 2FA tile input, password visibility toggles
-  - Client-side domain checks for Google placeholder sign-in
-*/
-async function postJSON(url, data){
-  const res = await fetch(url, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
-  return res.json();
+// Password eye icon logic (login)
+const eyeIcon = document.getElementById('toggleEye');
+const passwordInput = document.getElementById('login-password');
+eyeIcon.addEventListener('click', function() {
+  if (passwordInput.type === 'password') {
+    passwordInput.type = 'text';
+    eyeIcon.src = 'assets/img/password_hide.svg';
+    eyeIcon.alt = 'Hide Password';
+  } else {
+    passwordInput.type = 'password';
+    eyeIcon.src = 'assets/img/password_show.svg';
+    eyeIcon.alt = 'Show Password';
+  }
+});
+
+// Password eye icon logic (register modal - main password)
+const regEye = document.getElementById('toggleRegEye');
+const regPwd = document.getElementById('reg-password');
+regEye.addEventListener('click', function() {
+  if (regPwd.type === 'password') {
+    regPwd.type = 'text';
+    regEye.src = 'assets/img/password_hide.svg';
+    regEye.alt = 'Hide Password';
+  } else {
+    regPwd.type = 'password';
+    regEye.src = 'assets/img/password_show.svg';
+    regEye.alt = 'Show Password';
+  }
+});
+// Password eye icon logic (register modal - confirm password)
+const regConfEye = document.getElementById('toggleRegConfirmEye');
+const regConf = document.getElementById('reg-confirm');
+regConfEye.addEventListener('click', function() {
+  if (regConf.type === 'password') {
+    regConf.type = 'text';
+    regConfEye.src = 'assets/img/password_hide.svg';
+    regConfEye.alt = 'Hide Password';
+  } else {
+    regConf.type = 'password';
+    regConfEye.src = 'assets/img/password_show.svg';
+    regConfEye.alt = 'Show Password';
+  }
+});
+
+// Modal logic for show/hide register
+const registerModal = document.getElementById('registerModal');
+document.getElementById('show-register').onclick = (e) => {
+  e.preventDefault();
+  registerModal.style.display = 'flex';
+};
+document.getElementById('closeRegister').onclick = () => registerModal.style.display = 'none';
+
+// 2FA modal logic (similar)
+const twoFAModal = document.getElementById('twoFAModal');
+if(document.getElementById('close2FA')) {
+  document.getElementById('close2FA').onclick = () => twoFAModal.style.display = 'none';
 }
 
-// Simple DOM helpers
-const $ = s => document.querySelector(s);
-const $$ = s => Array.from(document.querySelectorAll(s));
-
-// Elements
-const loginForm = $('#loginForm');
-const loginMessage = $('#loginMessage');
-const modalOverlay = $('#modalOverlay');
-const modal2fa = $('#modal2fa');
-const modalRegister = $('#modalRegister');
-const openRegisterBtn = $('#openRegister');
-const closeRegisterBtn = $('#closeRegister');
-const close2faBtn = $('#close2fa');
-const twofaTiles = $('#twofaTiles');
-const twofaMsg = $('#twofaMsg');
-const remember30 = $('#remember30');
-const registerFormModal = $('#registerFormModal');
-const registerMessage = $('#registerMessage');
-const registerResult = $('#registerResult');
-
-// Modal controls (overlay click does NOT close)
-function showModal(modal){ modalOverlay.classList.remove('hidden'); modal.classList.remove('hidden'); }
-function hideModal(modal){ modalOverlay.classList.add('hidden'); modal.classList.add('hidden'); }
-openRegisterBtn.addEventListener('click', e=>{ e.preventDefault(); showModal(modalRegister); });
-closeRegisterBtn.addEventListener('click', e=>{ hideModal(modalRegister); });
-close2faBtn.addEventListener('click', e=>{ hideModal(modal2fa); });
-
-// password visibility toggles
-$$('.pwtoggle').forEach(btn=>{
-  btn.addEventListener('click', ()=>{
-    const inp = btn.parentElement.querySelector('input');
-    if(!inp) return;
-    inp.type = inp.type === 'password' ? 'text' : 'password';
-    btn.textContent = inp.type === 'password' ? '👁️' : '🙈';
+// 2FA input auto-move, error shake
+const tiles = document.querySelectorAll('#twoFAForm .tiles input');
+if(tiles.length) {
+  tiles.forEach((tile, idx) => {
+    tile.addEventListener('input', e => {
+      if (tile.value && idx < tiles.length - 1) tiles[idx + 1].focus();
+      if (Array.from(tiles).every(t => t.value)) document.getElementById('twoFAForm').submit();
+    });
   });
-});
 
-// 2FA tiles: create 6 tile elements and manage input
-const tiles = [];
-for(let i=0;i<6;i++){
-  const d = document.createElement('div'); d.className='tile'; d.dataset.idx = i; d.textContent = '';
-  twofaTiles.appendChild(d); tiles.push(d);
-}
-let tileVals = Array(6).fill('');
-let tileIndex = 0;
-
-// focus capture: listen for key input globally while modal open
-document.addEventListener('keydown', async (ev)=>{
-  if(modal2fa.classList.contains('hidden')) return;
-  if(ev.key === 'Backspace'){
-    if(tileIndex>0){ tileIndex--; tileVals[tileIndex]=''; tiles[tileIndex].textContent=''; }
-    ev.preventDefault(); return;
-  }
-  if(/^[0-9]$/.test(ev.key) && tileIndex < 6){
-    tileVals[tileIndex] = ev.key; tiles[tileIndex].textContent = ev.key; tileIndex++;
-    // auto submit when full
-    if(tileIndex === 6){
-      const code = tileVals.join('');
-      await submit2fa(code);
+  document.getElementById('twoFAForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    // Replace below with actual verification logic using AJAX/PHP
+    let wrongCode = false; // Simulate check
+    if (wrongCode) {
+      document.querySelector('#twoFAModal .modal-content').classList.add('shake');
+      setTimeout(() => {
+        document.querySelector('#twoFAModal .modal-content').classList.remove('shake');
+      }, 550);
+      document.getElementById('twoFAStatus').textContent = 'Wrong code! Try again.';
+      tiles.forEach(tile => tile.value = '');
+      tiles[0].focus();
+    } else {
+      // Success handler
     }
-  }
-});
-
-async function submit2fa(code){
-  twofaMsg.textContent = '';
-  const remember = remember30.checked;
-  const res = await postJSON('api/verify_2fa.php', {code, remember});
-  if(res.success){
-    // success -> redirect
-    window.location = 'dashboard.php';
-  } else {
-    // shake animation
-    twofaTiles.classList.remove('shake');
-    void twofaTiles.offsetWidth;
-    twofaTiles.classList.add('shake');
-    twofaMsg.textContent = res.error || 'Invalid code';
-    tileVals = Array(6).fill(''); tileIndex = 0; tiles.forEach(t=>t.textContent='');
-  }
+  });
 }
 
-// Login flow: show 2FA modal instead of prompt
-loginForm.addEventListener('submit', async e=>{
-  e.preventDefault(); loginMessage.textContent='';
-  const fd = new FormData(loginForm);
-  const body = {user: fd.get('user'), password: fd.get('password')};
-  const res = await postJSON('api/login.php', body);
-  if(res.success && res.needs2fa){
-    showModal(modal2fa);
-  } else if(res.success){
-    window.location = 'dashboard.php';
-  } else {
-    loginMessage.textContent = res.error || 'Login failed';
-  }
+// Google buttons (stub logic)
+document.getElementById('googleSignIn').addEventListener('click', function() {
+  alert("Google sign-in logic goes here. Only @slssr.edu(.ph) allowed.");
+});
+document.getElementById('googleReg').addEventListener('click', function() {
+  alert("Google register logic goes here. Only @slssr.edu(.ph) allowed.");
 });
 
-// Register modal flow
-registerFormModal.addEventListener('submit', async e=>{
-  e.preventDefault(); registerMessage.textContent=''; registerResult.textContent='';
-  const fd = new FormData(registerFormModal);
-  const body = {username: fd.get('username'), email: fd.get('email'), password: fd.get('password'), role: fd.get('role')};
-  const res = await postJSON('api/register.php', body);
-  if(res.success){
-    registerMessage.style.color = 'green'; registerMessage.textContent = 'Registered. Set up 2FA below.';
-    registerResult.textContent = `TOTP secret: ${res.secret}\n\notpauth URL:\n${res.otpauth}`;
-    // hide fields (indicate completion)
-    registerFormModal.style.display = 'none';
-  } else {
-    registerMessage.style.color = 'crimson'; registerMessage.textContent = res.error || 'Registration failed';
-  }
-});
-
-// Google Sign-in placeholders: accept only allowed domain or existing test emails
-const allowedGoogleDomain = 'slssr.edu.ph';
-function simulateGoogleSignIn(email){
-  // client-side check; backend must also enforce
-  const domain = email.split('@')[1] || '';
-  if(domain.toLowerCase() !== allowedGoogleDomain && !['espino.jamesbryant20+admin@gmail.com','espino.jamesbryant20+teacher@gmail.com','espino.jamesbryant20+students@gmail.com'].includes(email)){
-    alert('Google sign-in restricted to ' + allowedGoogleDomain + ' domain');
+// Register form validation for domain and pwd match
+document.getElementById('registerForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  let email = this.email.value;
+  if (!email.match(/@slssr\.edu(\.ph)?$/)) {
+    document.getElementById('regStatus').textContent = 'Only @slssr.edu(.ph) emails are allowed.';
     return;
   }
-  // for demo, just fill the login form and submit
-  loginForm.querySelector('[name="user"]').value = email;
-  // autopopulate a known password for test accounts is not stored client-side; prompt instead
-  const p = prompt('Enter password for ' + email);
-  if(!p) return;
-  loginForm.querySelector('[name="password"]').value = p;
-  loginForm.dispatchEvent(new Event('submit'));
-}
-
-$('#googleSignIn').addEventListener('click', ()=>{
-  const email = prompt('Enter your Google email (demo)'); if(!email) return; simulateGoogleSignIn(email);
-});
-$('#googleSignUp').addEventListener('click', ()=>{
-  const email = prompt('Enter your Google email (demo)'); if(!email) return; if(!email.endsWith('@'+allowedGoogleDomain)) return alert('Registration requires '+allowedGoogleDomain); registerFormModal.querySelector('[name="email"]').value = email;
+  if (this.password.value !== this['reg-confirm'].value) {
+    document.getElementById('regStatus').textContent = 'Passwords do not match!';
+    return;
+  }
+  // Proceed to AJAX for backend registration.
+  document.getElementById('regStatus').textContent = 'Registering...';
 });
 
+// Password toggle using Bootstrap
+document.getElementById('toggleEye').addEventListener('click', function(e) {
+  e.preventDefault();
+  const pwd = document.getElementById('login-password');
+  const icon = this.querySelector('img');
+  if (pwd.type === "password") {
+    pwd.type = "text";
+    icon.src = "assets/img/password_hide.svg";
+    icon.alt = "Hide";
+  } else {
+    pwd.type = "password";
+    icon.src = "assets/img/password_show.svg";
+    icon.alt = "Show";
+  }
+});

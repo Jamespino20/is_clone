@@ -1,29 +1,22 @@
 <?php
 require_once __DIR__ . '/helpers.php';
 header('Content-Type: application/json');
-$body = json_decode(file_get_contents('php://input'), true);
-if(!$body) exit(json_encode(['success'=>false,'error'=>'Invalid input']));
-$userq = trim($body['user'] ?? '');
-$pass = $body['password'] ?? '';
-if($userq === '' || $pass === '') exit(json_encode(['success'=>false,'error'=>'Missing credentials']));
-
-$users = load_users();
-$found = null;
-foreach($users as $u){
-    if($u['email'] === $userq || $u['username'] === $userq) { $found = $u; break; }
+session_start();
+$email = $_POST['email'] ?? '';
+$pw = $_POST['password'] ?? '';
+if(!$email || !$pw){ echo json_encode(['ok'=>false,'error'=>'Missing fields']); exit; }
+$user = find_user_by_email($email);
+if(!$user || !verify_password($pw,$user['password'])){ echo json_encode(['ok'=>false,'error'=>'Invalid credentials']); exit; }
+// If user has TOTP secret, require 2FA
+if(!empty($user['totp_secret'])){
+	$temp = gen_token(12);
+	$_SESSION['temp_user_email'] = $email;
+	$_SESSION['temp_token'] = $temp;
+	echo json_encode(['ok'=>true,'twofa_required'=>true,'temp_token'=>$temp]);
+	exit;
 }
-if(!$found) exit(json_encode(['success'=>false,'error'=>'User not found']));
-if(!authenticate_password($found, $pass)) exit(json_encode(['success'=>false,'error'=>'Invalid password']));
+// otherwise create session
+$_SESSION['user_email'] = $email;
+echo json_encode(['ok'=>true]);
 
-// password ok -> require 2FA if enabled
-if(!empty($found['2fa_enabled'])){
-    // store pending id
-    $_SESSION['pending_2fa_user'] = $found['id'];
-    echo json_encode(['success'=>true,'needs2fa'=>true]);
-    exit;
-}
-
-// else directly set session
-$_SESSION['user_id'] = $found['id'];
-$_SESSION['role'] = $found['role'];
-echo json_encode(['success'=>true,'needs2fa'=>false]);
+?>

@@ -1,88 +1,237 @@
-/* Palette and fonts
-   main: #017137, highlights: #f7e24b, bg-light: #F2EFDF
-   Using fallback fonts; Times New Roman and Baskerville are system fonts
-*/
-:root{
-  --main: #017137;
-  --highlight: #f7e24b;
-  --bg-light: #F2EFDF;
-  --muted: #6b6b6b;
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: 'Times New Roman', serif;
+  background: #F2EFDF;
 }
 
-*{box-sizing:border-box}
-body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg-light);color:#102014}
-.bg-layer{position:fixed;inset:0;z-index:0;display:block}
-.bg-img{width:100%;height:100%;object-fit:cover;opacity:0.95}
-.bg-footer{position:fixed;left:0;right:0;bottom:0;width:100%;height:auto;opacity:0.98}
-
-.login-wrapper{position:relative;z-index:2;min-height:100vh;padding:48px}
-.left-art{display:none}
-.panel{position:fixed;right:6%;top:37%;transform:translateY(-50%);width:720px;height:calc((720px*4)/3);max-width:70vw;max-height:86vh;background:rgba(255,255,255,0.99);padding:28px;border-radius:12px;box-shadow:0 22px 110px rgba(1,49,55,0.18);font-family:'Baskerville Old Face',serif;overflow:auto}
-.welcome{margin:0 0 8px 0;font-size:26px;color:var(--main);font-family:'Baskerville Old Face',serif}
-
-.form .field{display:block;margin-bottom:8px;font-weight:600;color:#274a33;font-size:13px}
-.form.compact input{width:100%;padding:12px 14px;border-radius:6px;border:1px solid #e9e9e9;font-size:15px}
-.pwwrap{display:flex;align-items:center}
-.pwwrap input{flex:1}
-.pwtoggle{margin-left:8px;background:#eee;border:0;padding:10px;border-radius:8px;cursor:pointer}
-
-.controls{display:flex;gap:12px;margin-top:12px}
-.btn{flex:1;padding:10px 12px;border-radius:8px;border:0;cursor:pointer;font-size:14px}
-.btn.primary{background:var(--main);color:#fff;transition:transform .12s ease,box-shadow .12s ease}
-.btn.primary:hover{transform:translateY(-4px);box-shadow:0 12px 30px rgba(1,49,55,0.2)}
-.btn.google{background:#fff;border:1px solid #ddd;display:flex;align-items:center;gap:10px;justify-content:flex-start;padding:8px}
-.btn.google .google-logo{width:20px;height:20px;display:inline-flex;margin-left:12px}
-.btn.google svg{width:20px;height:20px}
-
-/* compact inner layout */
-.panel-inner{max-width:420px;margin:0 auto;padding:6px 0 18px 0;display:flex;flex-direction:column;justify-content:flex-start;align-items:center;height:100%}
-.sub{color:#556B58;margin:0 0 12px 0;font-size:14px}
-.keep{display:block;margin:8px 0;color:var(--muted);font-size:13px}
-.or{display:flex;align-items:center;margin:14px 0}
-.or::before,.or::after{content:'';height:1px;background:#e6e6e6;flex:1}
-.or span{padding:0 12px;color:#888;font-size:12px}
-.links.bottom{display:flex;justify-content:space-between;margin-top:12px;width:100%}
-.links.bottom a{font-size:13px;color:var(--main)}
-.btn.full{display:block;width:100%;padding:10px 12px;border-radius:6px}
-.btn.google.full{justify-content:center}
-.btn.google .google-logo{width:18px;height:18px;margin-right:8px;margin-left:6px}
-.btn.primary.full{background:var(--main);color:#fff}
-.links{display:flex;justify-content:space-between;margin-top:8px}
-.links a{color:var(--main);text-decoration:none;font-size:14px}
-
-.msg{color:#b00020;margin-top:8px}
-.mono{font-family:monospace;background:#fff;padding:8px;border-radius:6px}
-
-/* Overlay + modal */
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:50}
-.hidden{display:none}
-.modal{position:fixed;z-index:60;left:50%;top:50%;transform:translate(-50%,-50%);background:#fff;border-radius:12px;padding:20px;min-width:340px;box-shadow:0 18px 60px rgba(0,0,0,0.35)}
-.modal-close{position:absolute;right:12px;top:8px;background:transparent;border:0;font-size:18px;cursor:pointer}
-.modal h3{margin-top:0}
-
-/* 2FA tiles */
-.totp-tiles{display:flex;gap:8px;justify-content:center;margin:12px 0}
-.totp-tiles .tile{width:44px;height:54px;border-radius:8px;border:1px solid #dcdcdc;display:flex;align-items:center;justify-content:center;font-size:20px;background:#fff}
-.totp-tiles.shake{animation:shake .5s}
-@keyframes shake{0%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-6px)}80%{transform:translateX(4px)}100%{transform:translateX(0)}}
-
-/* small helpers */
-.remember{display:block;margin-top:8px}
-
-/* responsive */
-/* Responsive fallbacks: reduce the locked size on smaller screens */
-@media (max-width:1400px){
-  .panel{width:620px;height:calc((620px*4)/3);right:5%}
+.container-fluid {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 0;
 }
-@media (max-width:1200px){
-  .panel{width:520px;height:calc((520px*4)/3);right:4%}
+
+.row.flex-grow-1 {
+  flex: 1 1 0;
+  align-items: stretch;
+  min-height: 100vh;
 }
-@media (max-width:900px){
-  /* On small screens switch to flow layout (not fixed) and allow full-width form */
-  .panel{position:static;transform:none;width:92%;height:auto;margin:40px auto;padding:28px}
-  .welcome{font-size:28px}
+
+/* School image left panel */
+.login-left, .bg-success {
+  background: url('assets/img/school-image.png') center center / cover no-repeat, #017137;
+  min-height: 100vh;
+  padding: 0;
+  position: relative;
 }
-@media(max-width:900px){
-  .panel{position:static;transform:none;width:92%;margin:40px auto;padding:28px}
-  .welcome{font-size:28px}
+@media (max-width: 900px) {
+  .login-left, .bg-success {
+    min-height: 210px;
+    background-size: cover;
+    width: 100vw;
+  }
+}
+
+/* Right login panel */
+.login-right, .bg-white {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 0;
+}
+@media (max-width: 900px) {
+  .login-right, .bg-white {
+    min-height: 340px;
+    padding: 0;
+  }
+}
+
+/* Center the login card in right panel */
+.login-card {
+  max-width: 420px;
+  margin: 2.7rem auto 1.7rem auto;
+  width: 100%;
+  background: #faf9f5;
+  border-radius: 16px;
+  box-shadow: 0 4px 22px rgba(1,113,55,.13);
+  padding: 2em 2em 1.2em 2em;
+}
+@media (max-width: 650px) {
+  .login-card {
+    max-width: 98vw;
+    padding: .75em .4em .7em .4em;
+    border-radius: 0;
+  }
+}
+
+h2, .login-title { font-family: 'Baskerville', serif; font-weight: bold; color: #017137; }
+h2.text-success { color: #017137; font-size: 2.2rem; }
+@media (max-width: 650px) {
+  h2.text-success { font-size:1.35rem; margin-bottom:1.1rem; }
+}
+
+.google-btn {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  margin: 1.1rem auto 0.7rem auto;
+  width: 100%;
+  border-radius: 8px !important;
+}
+.google-btn img {height: 1.32em;}
+
+.input-group .form-control { border-radius: 6px 0 0 6px; }
+.input-group .btn { border-radius: 0 6px 6px 0; }
+.input-group .btn img {width: 22px;}
+
+.form-label { font-weight: 500; color: #017137;}
+small, .small { font-size: 0.93rem;}
+a { color: #017137; transition:color .13s;}
+a:hover { color: #f7e24b;}
+.status { min-height: 22px; color: #d92323; text-align: center; font-size: 1rem;}
+
+.btn-success, .btn-outline-secondary:active, .btn-outline-secondary:hover {
+  background: #017137;
+  border-color: #017137;
+  color: #fff;
+}
+.btn-outline-secondary {
+  background: #fff;
+  border: 1px solid #ced4da;
+  color: #555;
+}
+.btn-success:hover { background: #f7e24b; color: #017137; border-color: #f7e24b; }
+
+/* Footer: force to bottom, always below content */
+footer, .custom-footer {
+  margin-top: 0;   /* Remove excess margin */
+  padding-top: 0.18rem;  /* Compact vertical spacing */
+  padding-bottom: 0.25rem;
+}
+.footer-img {
+  width: 100%;
+  height: 52px;
+  object-fit: cover;
+}
+.footer-info {
+  color: #fff;
+  font-family: 'Times New Roman', serif;
+  text-align: center;
+  font-size: .97rem;
+  padding: 0.3rem 0 0.2rem 0;
+}
+@media (max-width: 650px) {
+  .footer-img {height: 38px;}
+  .footer-info { font-size: 0.85rem;}
+}
+
+/* Fix odd Bootstrap spacing on phone */
+@media (max-width:500px){
+  .login-card {
+    margin: 1rem 0 1rem 0;
+    padding: .4em .1em .5em .1em;
+  }
+}
+
+/* Remove unwanted scrollbars from side panels and card */
+body, .container-fluid, .row.flex-grow-1 {
+  overflow-x: hidden !important;
+}
+.login-left, .login-right, .login-card {
+  overflow: hidden !important;
+}
+
+.custom-footer {
+  background: #003319;
+  width: 100vw;
+  color: #fff;
+  margin: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.footer-liner svg { 
+  display: block; 
+  width: 100%; 
+  height: 33px; 
+}
+
+.footer-logo {
+  max-width: 100%;
+  height: auto;
+  max-height: 120px;
+  display: block;
+  margin: 0 auto;
+}
+
+.footer-info {
+  font-family: 'Times New Roman', serif;
+  color: #fff;
+}
+
+.footer-title {
+  font-family: 'Baskerville', serif;
+  font-size: 1.4rem;
+  font-weight: bold;
+  color: #fff;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.5rem;
+}
+
+.footer-subtitle {
+  font-size: 1.1rem;
+  color: #f7e24b;
+  font-weight: 500;
+  margin-bottom: 0.3rem;
+}
+
+.footer-tagline {
+  font-size: 1rem;
+  font-weight: bold;
+  color: #fff;
+  margin-bottom: 1rem;
+  letter-spacing: 0.3px;
+}
+
+.footer-contact {
+  font-size: 0.95rem;
+  line-height: 1.4;
+  color: #e8f5e8;
+}
+
+/* Desktop: Image left, text right */
+@media (min-width: 992px) {
+  .footer-info {
+    text-align: left !important;
+  }
+}
+
+@media (max-width: 900px) {
+  .login-left { display: none !important; }
+  .login-right, .login-card {
+    background: url('assets/img/school-image.png') center center / cover no-repeat, #017137 !important;
+    min-height: 100vh;
+    width: 100vw;
+    box-shadow: 0 0 14px 3px rgba(32,64,32,.07);
+    color: #174537;
+    position: relative;
+  }
+  .login-card {
+    background: rgba(242,239,223,.95); /* semi-transparent so text remains readable */
+    margin: 1rem auto;
+    border-radius: 12px;
+    box-shadow: 0 4px 22px rgba(1,113,55,.13);
+  }
+}
+
+/* Even smaller screens for clarity */
+@media (max-width: 500px){
+  .login-right, .login-card {
+    background: url('assets/img/school-image.png') center center / cover no-repeat, #017137 !important;
+  }
+  .login-card { background: rgba(242,239,223,0.99);}
 }
