@@ -15,7 +15,9 @@
       <!-- Left (school image) -->
       <div class="col-lg-6 d-none d-lg-flex align-items-center justify-content-center bg-success p-0">
         <div class="w-100 h-100 d-flex align-items-center justify-content-center" style="background: url('assets/img/school-image.png') center center / cover no-repeat;">
-          <!-- Optional school logo overlay if needed-->
+          <div class="school-logo">
+            <img src="assets/img/school-logo.png" alt="School Logo" class="img-fluid">>
+          </div>
         </div>
       </div>
 
@@ -72,53 +74,90 @@
   <div class="container-fluid">
     <div class="row align-items-center py-3">
       <!-- Image column (hidden on very small screens) -->
-      <div class="col-lg-6 col-md-12 text-center">
-        <img src="assets/img/footer.png" alt="SLSSR Footer Logo" class="footer-logo">
-      </div>
-      <!-- Text column -->
-      <div class="col-lg-6 col-md-12 text-center text-lg-start">
-        <div class="footer-info">
-          <div class="footer-contact">
-            St. Luke's School of San Rafael • Sampaloc, San Rafael, Bulacan<br>
-            Email: info@slssr.edu.ph • © 2025 St. Luke's School
-          </div>
+  <div class="footer-stack">
+    <img src="assets/img/footer.png" class="footer-logo" alt="School Logo" />
+    <div class="footer-info">
+      St. Luke's School of San Rafael • Sampaloc, San Rafael, Bulacan<br>
+      Email: info@slssr.edu.ph • © 2025 St. Luke's School
+    </div>
+  </div>
       </div>
     </div>
   </div>
 </footer>
 
 <!-- Register Modal -->
-<div id="registerModal" class="modal" tabindex="-1">
+<div id="registerModal" class="modal-backdrop">
   <div class="modal-dialog">
     <div class="modal-content">
+      <button class="modal-close" id="closeRegister">&times;</button>
       <div class="modal-header">
         <h5 class="modal-title">Create your account</h5>
-        <button type="button" class="btn-close" id="closeRegister"></button>
       </div>
-      <div class="modal-body">
-        <!-- Your register form fields go here -->
+      <div class="modal-body" id="registerModalBody">
+        <button class="btn-google w-100 mb-2" id="registerWithGoogle">
+          <img src="assets/img/google.svg" class="me-2" style="height:1.1em;"> Sign up with Google
+        </button>
+        <hr class="mb-2 mt-2"/>
+        <form id="registerForm" autocomplete="off">
+          <div class="mb-2"><input type="text" placeholder="First Name" name="first" required></div>
+          <div class="mb-2"><input type="text" placeholder="Last Name" name="last" required></div>
+          <div class="mb-2"><input type="date" placeholder="Birthday" name="bday" required></div>
+          <div class="mb-2">
+            <input type="email" placeholder="Email (@slssr.edu.ph)" pattern="^[^@\\s]+@slssr.edu\\.ph$" name="email" required>
+          </div>
+          <div class="mb-2 position-relative">
+            <input type="password" placeholder="Password" id="regPassword" required>
+            <button type="button" class="eye-toggle" id="toggleRegPw"><img src="assets/img/password_show.svg" alt="Show"></button>
+          </div>
+          <div class="mb-2 position-relative">
+            <input type="password" placeholder="Confirm Password" id="regConPassword" required>
+            <button type="button" class="eye-toggle" id="toggleRegConPw"><img src="assets/img/password_show.svg" alt="Show"></button>
+          </div>
+        <div class="mb-2">
+          <select name="role" required>
+            <option value="" disabled selected>Select your role</option>
+            <option value="Student">Student</option>
+            <option value="Parent">Parent</option>
+            <option value="Faculty">Faculty</option>
+            <option value="Staff">Staff</option>
+            <option value="Administrator">Administrator</option>
+          </select>
+          <button class="btn-register w-100 mt-2" type="submit" id="registerBtn">Register</button>
+        </form>
+      </div>
+      <div class="modal-body d-none" id="regSuccessMsg">
+        <p>Registration successful! Here’s your secret key for Google Auth:</p>
+        <div class="secret-key" id="userSecret"></div>
+        <p class="mt-2 small">Your TOTP secret can also be found in your student profile.</p>
       </div>
     </div>
   </div>
 </div>
 
 <!-- 2FA Modal -->
-<div id="twoFAModal" class="modal" tabindex="-1">
-  <div class="modal-dialog modal-sm">
+<div id="twoFAModal" class="modal-backdrop">
+  <div class="modal-dialog modal-small">
     <div class="modal-content">
+      <button class="modal-close" id="close2FA">&times;</button>
       <div class="modal-header">
         <h5 class="modal-title">Enter your code</h5>
-        <button type="button" class="btn-close" id="close2FA"></button>
       </div>
-      <div class="modal-body">
-        <!-- Your 2FA input fields go here -->
-      </div>
+      <form class="modal-body" id="twoFAForm" autocomplete="off">
+        <div class="code-grid" id="faCodeTiles">
+          <input inputmode="numeric" maxlength="1" pattern="[0-9]*" required>
+          <input inputmode="numeric" maxlength="1" pattern="[0-9]*" required>
+          <input inputmode="numeric" maxlength="1" pattern="[0-9]*" required>
+          <input inputmode="numeric" maxlength="1" pattern="[0-9]*" required>
+          <input inputmode="numeric" maxlength="1" pattern="[0-9]*" required>
+          <input inputmode="numeric" maxlength="1" pattern="[0-9]*" required>
+        </div>
+        <label class="remember-me"><input type="checkbox" id="faRemember"> Remember me for 30 days</label>
+        <button type="submit" class="btn-2fa-submit mt-2">Validate</button>
+      </form>
     </div>
   </div>
 </div>
-
-
-  </div>
   <!-- Bootstrap JS (optional but handy for modals/popups) -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script src="assets/js/app.js"></script>

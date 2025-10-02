@@ -1,0 +1,411 @@
+html,
+body {
+  height: 100%;
+  margin: 0;
+  background: #f2efdf;
+  font-family: "Times New Roman", serif;
+}
+
+.container-fluid {
+  display: flex;
+  flex-direction: column;
+  min-height: 10vh;
+  padding: 0;
+  overflow-x: hidden;
+}
+
+/* Main row split desktop */
+.row.flex-grow-1 {
+  display: flex;
+  flex-grow: 1;
+}
+
+.col-lg-6 {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+/* Left (school image) - desktop */
+.login-left {
+  position: relative;
+  background: url("assets/img/school-image.png") center center / cover no-repeat,
+    #017137;
+  display: flex;
+  align-items: flex-start;
+  min-height: 100vh;
+  padding: 0;
+}
+
+/* School logo top-left for desktop */
+.school-logo {
+  position: absolute;
+  left: 3vw;
+  top: 2.4vw;
+  width: 120px;
+  max-width: 180px;
+  min-width: 84px;
+  height: auto;
+  z-index: 10;
+}
+@media (min-width: 1600px) {
+  .school-logo {
+    width: 160px;
+    max-width: 240px;
+    left: 3vw;
+    top: 2vw;
+  }
+}
+
+/* Center logo for tablet and phone view */
+@media (max-width: 991.98px) {
+  .login-left,
+  .bg-success {
+    display: none !important;
+  }
+  .login-right {
+    background: url("assets/img/school-image.png") center center / cover
+        no-repeat,
+      #017137 !important;
+    min-height: 100vh !important;
+    width: 100vw !important;
+    position: relative;
+  }
+  .school-logo {
+    position: static;
+    display: block;
+    margin: 1.5rem auto 1.2rem auto;
+    left: initial;
+    top: initial;
+    width: 102px;
+    max-width: 28vw;
+    min-width: 67px;
+    z-index: 4;
+  }
+}
+
+/* Even smaller for phone, logo always centered and shrinks slightly */
+@media (max-width: 575.98px) {
+  .school-logo {
+    display: block;
+    margin: 1.1rem auto 0.7rem auto;
+    width: 76px;
+    max-width: 30vw;
+    min-width: 56px;
+  }
+  .login-card {
+    max-width: 98vw;
+    padding: 0.8em 0.2em 1em 0.2em;
+  }
+}
+
+/* Login right desktop */
+.login-right {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 0;
+  background: #fff;
+}
+
+/* Login card (always centered) */
+.login-card {
+  max-width: 420px;
+  width: 100%;
+  margin: 2.7rem auto 1.7rem auto;
+  background: #faf9f5;
+  border-radius: 16px;
+  box-shadow: 0 4px 22px rgba(1, 113, 55, 0.13);
+  padding: 2em 2em 1.2em 2em;
+}
+
+/* Typography and buttons */
+h2,
+.login-title {
+  font-family: "Baskerville", serif;
+  font-weight: bold;
+  color: #017137;
+}
+h2.text-success {
+  font-size: 2.2rem;
+}
+@media (max-width: 650px) {
+  h2.text-success {
+    font-size: 1.35rem;
+    margin-bottom: 1.1rem;
+  }
+}
+
+/* Footer responsive layout */
+footer,
+.custom-footer {
+  width: 100vw;
+  background: #00401fe6;
+  color: #fff;
+  min-height: 20px;
+  margin: 0;
+  position: relative;
+  padding-top: 0.18rem;
+  padding-bottom: 0.18rem;
+  box-shadow: 0 -3px 8px rgba(1, 113, 55, 0.09);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.footer-stack {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  gap: 1.7rem;
+}
+
+/* Logo always sized right */
+.footer-logo {
+  max-width: 500px;
+  width: 29vw;
+  min-width: 70px;
+  height: auto;
+  display: block;
+}
+
+/* Info block always fits and stacks */
+.footer-info {
+  color: #fff;
+  font-family: "Times New Roman", serif;
+  font-size: 1.08em;
+  line-height: 1.23;
+  word-break: break-word;
+  text-align: left;
+}
+
+@media (max-width: 1084px) {
+  .footer-stack {
+    flex-direction: column;
+    gap: 0.3rem;
+    align-items: center;
+  }
+  .footer-logo {
+    margin-bottom: 0.18em;
+    max-width: 120vw;
+    min-width: 40px;
+  }
+  .footer-info {
+    font-size: 0.97em;
+    text-align: center;
+    padding: 0;
+    margin: 0;
+  }
+}
+
+@media (max-width: 450px) {
+  .footer-stack {
+    gap: 0.15rem;
+  }
+  .footer-logo {
+    max-width: 60vw;
+    min-width: 24px;
+  }
+  .footer-info {
+    font-size: 0.78em;
+    line-height: 1.13;
+  }
+}
+
+/* UTILITIES */
+body,
+.container-fluid,
+.row.flex-grow-1 {
+  overflow-x: hidden !important;
+}
+.login-left,
+.login-right,
+.login-card {
+  overflow: hidden !important;
+}
+
+/* Modal basic style */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1300;
+  background: rgba(0, 0, 0, 0.5); /* Soft overlay */
+  --bs-backdrop-bg: rgba(0, 0, 0, 0.5) !important;
+  --bs-backdrop-opacity: 1 !important;
+  align-items: center;
+  justify-content: center;
+  display: none;
+}
+
+.modal-backdrop.show {
+  display: flex;
+}
+
+.modal-dialog {
+  background: none;
+  border: none;
+  width: 100%;
+  max-width: 388px;
+  min-width: 260px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-content {
+  background: #5a5a5a !important;
+  padding: 1.6em 1.1em;
+  border-radius: 18px;
+  box-shadow: 0 4px 36px rgba(44, 80, 72, 0.27);
+  width: 100%;
+  max-width: 368px;
+  position: relative;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.modal-title {
+  font-size: 1.22em;
+  font-family: "Baskerville", serif;
+  color: #017137;
+}
+
+.modal-close {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  background: none;
+  border: none;
+  font-size: 1.7em;
+  color: #333;
+  opacity: 0.74;
+  cursor: pointer;
+  z-index: 9;
+  line-height: 1;
+}
+
+.btn-google {
+  background: #f7e24b;
+  color: #263622;
+  font-weight: 600;
+  border: none;
+  border-radius: 7px;
+  cursor: pointer;
+}
+.btn-google img {
+  vertical-align: middle;
+  margin-right: 0.2em;
+}
+
+input[type=\"text\"],
+input[type=\"email\"],
+input[type=\"password\"],
+input[type=\"date\"] {
+  width: 100%;
+  border-radius: 7px;
+  border: 1px solid #c2c9c7;
+  padding: 0.65em 0.8em;
+  margin-bottom: 8px;
+  font-size: 1.02em;
+}
+
+.btn-register,
+.btn-2fa-submit {
+  background: #017137;
+  color: #fff;
+  border: none;
+  border-radius: 7px;
+  font-size: 1.13em;
+  padding: 0.6em 0;
+  font-weight: 600;
+  transition: background 0.16s;
+  cursor: pointer;
+}
+.btn-register:hover,
+.btn-2fa-submit:hover {
+  background: #f7e24b;
+  color: #017137;
+}
+
+/* Eye button for password toggle */
+.eye-toggle {
+  background: none;
+  border: none;
+  position: absolute;
+  right: 8px;
+  top: 5px;
+  padding: 3px 2px;
+  cursor: pointer;
+}
+.eye-toggle img {
+  width: 22px;
+  height: 22px;
+}
+
+.code-grid {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  gap: 0.62em;
+  margin-bottom: 1em;
+}
+.code-grid input[type=\"text\"],
+.code-grid input[type=\"number\"] {
+  width: 2.2em;
+  font-size: 1.68em;
+  text-align: center;
+  border-radius: 7px;
+  border: 1.4px solid #ddd;
+  padding: 0.3em 0;
+}
+
+.remember-me {
+  font-size: 0.97em;
+  color: #175f38;
+  margin-top: 0.4em;
+  display: block;
+  text-align: center;
+}
+
+.secret-key {
+  font-size: 1.2em;
+  font-family: monospace;
+  background: #f5ffe1;
+  border-radius: 4px;
+  padding: 0.43em 1.1em;
+  letter-spacing: 0.03em;
+  text-align: center;
+  margin-top: 6px;
+}
+
+.modal-backdrop[data-shake=\"1\"] .modal-content {
+  animation: shake 0.32s 1;
+}
+@keyframes shake {
+  10%,
+  30%,
+  50%,
+  70%,
+  90% {
+    transform: translateX(-9px);
+  }
+  20%,
+  40%,
+  60%,
+  80% {
+    transform: translateX(9px);
+  }
+}
+
+.d-none {
+  display: none !important;
+}
