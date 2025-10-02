@@ -24,7 +24,7 @@
         <div class="w-100" style="max-width: 420px; margin: 0 auto;">
           <h2 class="text-success fw-bold mb-2 mt-4 text-center" style="font-family: 'Baskerville', serif;">Welcome back!</h2>
           <div class="mb-3 text-center">
-            <small>Don't have an account? <a href="#" id="show-register">Sign up.</a></small>
+            <small>Don't have an account? <a href="#" id="show-register">Sign up!</a></small>
           </div>
           <form id="loginForm" class="shadow rounded p-4 bg-light">
             <button type="button" class="btn btn-outline-secondary w-100 mb-3 d-flex align-items-center justify-content-center" id="googleSignIn">

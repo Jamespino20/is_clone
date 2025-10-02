@@ -1,0 +1,273 @@
+html, body {
+  height: 100%;
+  margin-bottom: 0 !important;
+  padding-bottom: 0 !important;
+  font-family: 'Times New Roman', serif;
+  background: #F2EFDF;
+}
+
+.container-fluid {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 0;
+}
+
+.row.flex-grow-1 {
+  flex: 1 1 0;
+  align-items: stretch;
+  min-height: 100vh;
+}
+
+/* School image left panel */
+.login-left, .bg-success {
+  background: center center / cover no-repeat, #017137;
+  min-height: 100vh;
+  padding: 0;
+  position: relative;
+}
+@media (max-width: 900px) {
+  .login-left, .bg-success {
+    min-height: 210px;
+    background-size: cover;
+    width: 100vw;
+  }
+}
+
+/* Right login panel */
+.login-right, .bg-white {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 0;
+}
+@media (max-width: 900px) {
+  .login-right, .bg-white {
+    min-height: 340px;
+    padding: 0;
+  }
+}
+
+/* Center the login card in right panel */
+.login-card {
+  max-width: 420px;
+  margin: 2.7rem auto 1.7rem auto;
+  width: 100%;
+  background: #faf9f5;
+  border-radius: 16px;
+  box-shadow: 0 4px 22px rgba(1,113,55,.13);
+  padding: 2em 2em 1.2em 2em;
+}
+@media (max-width: 650px) {
+  .login-card {
+    max-width: 98vw;
+    padding: .75em .4em .7em .4em;
+    border-radius: 0;
+  }
+}
+
+h2, .login-title { font-family: 'Baskerville', serif; font-weight: bold; color: #017137; }
+h2.text-success { color: #017137; font-size: 2.2rem; }
+@media (max-width: 650px) {
+  h2.text-success { font-size:1.35rem; margin-bottom:1.1rem; }
+}
+
+.google-btn {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  margin: 1.1rem auto 0.7rem auto;
+  width: 100%;
+  border-radius: 8px !important;
+}
+.google-btn img {height: 1.32em;}
+
+.input-group .form-control { border-radius: 6px 0 0 6px; }
+.input-group .btn { border-radius: 0 6px 6px 0; }
+.input-group .btn img {width: 22px;}
+
+.form-label { font-weight: 500; color: #017137;}
+small, .small { font-size: 0.93rem;}
+a { color: #017137; transition:color .13s;}
+a:hover { color: #f7e24b;}
+.status { min-height: 22px; color: #d92323; text-align: center; font-size: 1rem;}
+
+.btn-success, .btn-outline-secondary:active, .btn-outline-secondary:hover {
+  background: #017137;
+  border-color: #017137;
+  color: #fff;
+}
+.btn-outline-secondary {
+  background: #fff;
+  border: 1px solid #ced4da;
+  color: #555;
+}
+.btn-success:hover { background: #f7e24b; color: #017137; border-color: #f7e24b; }
+
+/* Footer: force to bottom, always below content */
+footer, .custom-footer {
+  width: 100vw;
+  background: #017137;
+  color: #fff;
+  z-index: 1000;
+  margin-top: 0;
+  padding-top: 0.15rem;
+  padding-bottom: 0.12rem;
+  position: relative;
+  box-shadow: 0 -3px 8px rgba(1,113,55,.09);
+}
+.footer-img {
+  width: 100%;
+  height: 52px;
+  object-fit: cover;
+}
+.footer-info {
+  color: #fff;
+  font-family: 'Times New Roman', serif;
+  text-align: center;
+  font-size: .97rem;
+  padding: 0.3rem 0 0.2rem 0;
+}
+
+@media (max-width: 650px) {
+  .footer-img {height: 38px;}
+  .footer-info { font-size: 0.85rem;}
+}
+
+/* Fix odd Bootstrap spacing on phone */
+@media (max-width:500px){
+  .login-card {
+    margin: 1rem 0 1rem 0;
+    padding: .4em .1em .5em .1em;
+  }
+}
+
+/* Remove unwanted scrollbars from side panels and card */
+body, .container-fluid, .row.flex-grow-1 {
+  overflow-x: hidden !important;
+}
+.login-left, .login-right, .login-card {
+  overflow: hidden !important;
+}
+
+.custom-footer {
+  background: #003319;
+  width: 100vw;
+  color: #fff;
+  margin: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.footer-liner svg { 
+  display: block; 
+  width: 100%; 
+  height: 33px; 
+}
+
+.footer-logo {
+  max-width: 100%;
+  height: auto;
+  max-height: 110px;
+  display: block;
+  margin: 0 auto 0.15em auto;
+}
+
+.footer-info {
+  font-family: 'Times New Roman', serif;
+  color: #fff;
+}
+
+.footer-title {
+  font-family: 'Baskerville', serif;
+  font-size: 1.4rem;
+  font-weight: bold;
+  color: #fff;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.5rem;
+}
+
+.footer-subtitle {
+  font-size: 1.1rem;
+  color: #f7e24b;
+  font-weight: 500;
+  margin-bottom: 0.3rem;
+}
+
+.footer-tagline {
+  font-size: 1rem;
+  font-weight: bold;
+  color: #fff;
+  margin-bottom: 1rem;
+  letter-spacing: 0.3px;
+}
+
+.footer-contact {
+  font-size: 0.95rem;
+  line-height: 1.4;
+  color: #e8f5e8;
+}
+
+/* Desktop: Image left, text right */
+@media (min-width: 992px) {
+  .footer-info {
+    text-align: left !important;
+  }
+}
+
+/* MOBILE: show school image as login panel background */
+@media (max-width: 900px) {
+  .login-left,
+  .bg-success {
+    display: none !important;
+  }
+
+  .login-right {
+    background: url('assets/img/school-image.png') center center / cover no-repeat, #017137 !important;
+    min-height: 100vh !important;
+    width: 100vw !important;
+    color: #174537;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    box-shadow: none;
+  }
+
+  .login-card {
+    /* nearly solid background for readability, but lets a tiny bit of photo show through */
+    background: rgba(255,255,255,0.97);
+    border-radius: 12px;
+    margin: 2rem auto;
+    max-width: 95vw;
+    width: 100%;
+  }
+}
+
+/* Small screens: extra compact */
+@media (max-width: 650px) {
+  .login-card {
+    background: rgba(242,239,223, 0.95);
+    padding: .8em .15em .91em .15em;
+    border-radius: 8px;
+    margin: 1.1rem auto;
+  }
+  .footer-logo {
+    display: block !important;
+    max-width: 70vw; /* smaller max-width on phones */
+  }
+}
+
+/* Very small: remove border-radius (optional for edge-to-edge look) */
+@media (min-width: 375px) {
+  .login-card {
+    background: rgba(242,239,223, 0.95);
+    border-radius: 0;
+    background: rgba(255,255,255,0.97);
+    margin: 0.3rem 0;
+  }
+  .footer-logo {
+    display: block !important;
+    max-width: 70vw; /* smaller max-width on phones */
+  }
+}
