@@ -39,8 +39,8 @@
               <label class="form-label mb-1">Password</label>
               <div class="input-group">
                 <input type="password" id="login-password" name="password" class="form-control" required autocomplete="current-password">
-                <button class="btn btn-outline-secondary" type="button" id="toggleEye">
-                  <img src="assets/img/password_show.svg" alt="Show" style="width:20px; height:20px;">
+                <button class="btn btn-outline-secondary" type="button" id="toggleEye" tabindex="-1">
+                  <img src="assets/img/password_show.svg" alt="Show Password" style="width:20px; height:20px;">
                 </button>
               </div>
             </div>
@@ -72,7 +72,7 @@
   <div class="container-fluid">
     <div class="row align-items-center py-3">
       <!-- Image column (hidden on very small screens) -->
-      <div class="col-lg-6 col-md-12 d-none d-sm-block text-center">
+      <div class="col-lg-6 col-md-12 text-center">
         <img src="assets/img/footer.png" alt="SLSSR Footer Logo" class="footer-logo">
       </div>
       <!-- Text column -->
@@ -86,6 +86,37 @@
     </div>
   </div>
 </footer>
+
+<!-- Register Modal -->
+<div id="registerModal" class="modal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Create your account</h5>
+        <button type="button" class="btn-close" id="closeRegister"></button>
+      </div>
+      <div class="modal-body">
+        <!-- Your register form fields go here -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 2FA Modal -->
+<div id="twoFAModal" class="modal" tabindex="-1">
+  <div class="modal-dialog modal-sm">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Enter your code</h5>
+        <button type="button" class="btn-close" id="close2FA"></button>
+      </div>
+      <div class="modal-body">
+        <!-- Your 2FA input fields go here -->
+      </div>
+    </div>
+  </div>
+</div>
+
 
   </div>
   <!-- Bootstrap JS (optional but handy for modals/popups) -->
