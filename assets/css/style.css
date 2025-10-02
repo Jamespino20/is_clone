@@ -11,13 +11,19 @@ html, body {
   flex-direction: column;
   justify-content: space-between;
   padding: 0;
+  overflow-x: hidden;
 }
 
 .row.flex-grow-1 {
-  flex: 1 1 0;
-  align-items: stretch;
-  min-height: 100vh;
+  display: flex;
+  flex-grow: 1;
 }
+
+.col-lg-6 {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
 
 /* School image left panel */
 .login-left, .bg-success {
@@ -212,54 +218,83 @@ body, .container-fluid, .row.flex-grow-1 {
 /* Desktop: Image left, text right */
 @media (min-width: 992px) {
   .footer-info {
-    text-align: left !important;
+    text-align: center !important;
   }
 }
 
 /* MOBILE: show school image as login panel background */
 @media (max-width: 900px) {
-  .login-left,
-  .bg-success {
+  .login-left {
     display: none !important;
   }
-
   .login-right {
     background: url('assets/img/school-image.png') center center / cover no-repeat, #017137 !important;
     min-height: 100vh !important;
     width: 100vw !important;
+    box-shadow: none;
+    position: relative;
     color: #174537;
     justify-content: center;
     align-items: center;
-    position: relative;
-    box-shadow: none;
   }
-
   .login-card {
-    /* nearly solid background for readability, but lets a tiny bit of photo show through */
-    background: rgba(255,255,255,0.97);
+    background: rgba(255, 255, 255, 0.97);
     border-radius: 12px;
     margin: 2rem auto;
     max-width: 95vw;
     width: 100%;
+    box-shadow: 0 6px 28px rgba(1, 113, 55, 0.18);
   }
 }
 
+
 /* Small screens: extra compact */
-@media (max-width: 650px) {
+@media (min-width: 650px) {
+  .login-left {
+    display: none !important;
+  }
+  .login-right {
+    background: url('dsa-school/assets/img/school-image.png') center center / cover no-repeat, #017137 !important;
+    min-height: 100vh;
+    width: 100vw;
+    box-shadow: none;
+    position: relative;
+    color: #174537;
+  }
   .login-card {
     background: rgba(242,239,223, 0.95);
     padding: .8em .15em .91em .15em;
     border-radius: 8px;
     margin: 1.1rem auto;
   }
+  .footer-info, .footer-contact {
+    display: block;
+    width: 100%;
+    font-size: 0.95em;
+    padding-bottom: 4px;
+    /* Optionally add: */
+    word-break: break-word;
+  }
   .footer-logo {
+    max-width: 80vw;
+    margin: 0 auto 8px auto;
     display: block !important;
-    max-width: 70vw; /* smaller max-width on phones */
   }
 }
 
 /* Very small: remove border-radius (optional for edge-to-edge look) */
 @media (min-width: 375px) {
+  .login-left {
+    display: none !important;
+  }
+  .login-right {
+    background: url('dsa-school/assets/img/school-image.png') center center / cover no-repeat, #017137 !important;
+    min-height: 100vh;
+    width: 100vw;
+    box-shadow: none;
+    position: relative;
+    color: #174537;
+  }
   .login-card {
     background: rgba(242,239,223, 0.95);
     border-radius: 0;
@@ -269,5 +304,18 @@ body, .container-fluid, .row.flex-grow-1 {
   .footer-logo {
     display: block !important;
     max-width: 70vw; /* smaller max-width on phones */
+  }
+  .footer-info, .footer-contact {
+    display: block;
+    width: 100%;
+    font-size: 0.95em;
+    padding-bottom: 4px;
+    /* Optionally add: */
+    word-break: break-word;
+  }
+  .footer-logo {
+    max-width: 80vw;
+    margin: 0 auto 8px auto;
+    display: block !important;
   }
 }

@@ -1,17 +1,20 @@
 // Password eye icon logic (login)
-const eyeIcon = document.getElementById('toggleEye');
+const toggleEyeBtn = document.getElementById('toggleEye');
 const passwordInput = document.getElementById('login-password');
-eyeIcon.addEventListener('click', function() {
+toggleEyeBtn.addEventListener('click', function(e) {
+  e.preventDefault();
+  const iconImg = this.querySelector('img');
   if (passwordInput.type === 'password') {
     passwordInput.type = 'text';
-    eyeIcon.src = 'assets/img/password_hide.svg';
-    eyeIcon.alt = 'Hide Password';
+    iconImg.src = 'assets/img/password_hide.svg';
+    iconImg.alt = 'Hide Password';
   } else {
     passwordInput.type = 'password';
-    eyeIcon.src = 'assets/img/password_show.svg';
-    eyeIcon.alt = 'Show Password';
+    iconImg.src = 'assets/img/password_show.svg';
+    iconImg.alt = 'Show Password';
   }
 });
+
 
 // Password eye icon logic (register modal - main password)
 const regEye = document.getElementById('toggleRegEye');
@@ -122,4 +125,19 @@ document.getElementById('toggleEye').addEventListener('click', function(e) {
     icon.src = "assets/img/password_show.svg";
     icon.alt = "Show";
   }
+});
+
+// Show register modal
+document.getElementById('show-register').addEventListener('click', e => {
+  e.preventDefault();
+  document.getElementById('registerModal').style.display = 'flex';
+});
+// Close register modal
+document.getElementById('closeRegister').addEventListener('click', () => {
+  document.getElementById('registerModal').style.display = 'none';
+});
+
+// Similar for 2FA
+document.getElementById('close2FA').addEventListener('click', () => {
+  document.getElementById('twoFAModal').style.display = 'none';
 });
