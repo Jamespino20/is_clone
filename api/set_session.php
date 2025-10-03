@@ -1,9 +1,17 @@
 <?php
+declare(strict_types=1);
+
 session_start();
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['email'])) {
-  $_SESSION['email'] = $_POST['email'];
-  echo json_encode(['success' => true]);
-  exit;
+header('Content-Type: application/json');
+
+$key = preg_replace('/[^a-zA-Z0-9_\-]/', '', $_POST['key'] ?? '');
+$val = $_POST['value'] ?? null;
+
+if ($key === '' || $val === null) {
+    echo json_encode(['ok' => false, 'error' => 'Missing key or value']);
+    exit;
 }
-http_response_code(400);
-echo json_encode(['error' => 'Invalid request']);
+
+$_SESSION[$key] = $val;
+echo json_encode(['ok' => true]);
+?>

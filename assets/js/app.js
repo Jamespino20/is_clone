@@ -1,235 +1,166 @@
-document.addEventListener('DOMContentLoaded', function() {
-  // Helper password toggle
-  function addEyeToggle(inputId, btnId) {
-    var pw = document.getElementById(inputId);
-    var btn = document.getElementById(btnId);
-    if (pw && btn) {
-      btn.addEventListener('click', function(e){
-        e.preventDefault();
-        var img = btn.querySelector('img');
-        if(pw.type === 'password'){
-          pw.type = 'text';
-          img.src = 'assets/img/password_hide.svg';
-          img.alt = 'Hide';
-        } else {
-          pw.type = 'password';
-          img.src = 'assets/img/password_show.svg';
-          img.alt = 'Show';
+/* app.js (refactored, guarded, 2FA-aware) */
+(function () {
+  'use strict';
+
+  const $ = (id) => document.getElementById(id);
+  const qs = (sel, root = document) => root.querySelector(sel);
+  const qsa = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+  const on = (el, ev, fn, opts) => el && el.addEventListener(ev, fn, opts);
+  const show = (el) => { if (el) el.style.display = 'block'; };
+  const hide = (el) => { if (el) el.style.display = 'none'; };
+  const showFlex = (el) => { if (el) el.style.display = 'flex'; };
+
+  function setStatus(id, msg) {
+    const el = $(id);
+    if (el) el.textContent = msg;
+    else console.log(`[status:${id}] ${msg}`);
+  }
+  function toForm(data) {
+    return Object.entries(data)
+      .map(([k, v]) => encodeURIComponent(k) + '=' + encodeURIComponent(v == null ? '' : v))
+      .join('&');
+  }
+  async function post(url, data) {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+      body: toForm(data),
+      credentials: 'same-origin',
+    });
+    const text = await res.text();
+    try { return JSON.parse(text); } catch { return { ok: false, error: text || 'Invalid server response' }; }
+  }
+  function openModal(id, mode = 'block') { const el = $(id); if (el) el.style.display = mode; }
+  function closeModal(id) { const el = $(id); if (el) el.style.display = 'none'; }
+
+  function addEyeToggle(inputId, btnId, icons = { show: 'assets/img/password_show.svg', hide: 'assets/img/password_hide.svg' }) {
+    const input = $(inputId);
+    const btn = $(btnId);
+    if (!input || !btn) return;
+    on(btn, 'click', (e) => {
+      e.preventDefault();
+      const img = btn.querySelector('img');
+      const isHidden = input.type === 'password';
+      input.type = isHidden ? 'text' : 'password';
+      if (img) { img.src = isHidden ? icons.hide : icons.show; img.alt = isHidden ? 'Hide' : 'Show'; }
+    });
+  }
+
+  function wire2FATiles(formId, tilesSelector, statusId, onSubmit) {
+    const form = $(formId);
+    console.log('wire2FATiles called for', formId, form);
+    if (!form) return;
+    const tiles = qsa(tilesSelector, form);
+    if (!tiles.length) return;
+
+    tiles.forEach((tile, idx) => {
+      on(tile, 'input', () => {
+        tile.value = tile.value.replace(/\D/g, '').slice(0, 1);
+        if (tile.value && idx < tiles.length - 1) tiles[idx + 1].focus();
+      });
+      on(tile, 'keydown', (e) => {
+        if (e.key === 'Backspace' && !tile.value && idx > 0) tiles[idx - 1].focus();
+      });
+    });
+
+    on(form, 'submit', (e) => {
+      e.preventDefault();
+      const code = tiles.map(t => t.value).join('');
+      if (code.length !== tiles.length) { setStatus(statusId, 'Please enter the complete code.'); return; }
+      onSubmit(code, { form, tiles });
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    console.log('app.js DOMContentLoaded fired');
+    addEyeToggle('login-password', 'toggleEye');
+    addEyeToggle('reg-password', 'toggleRegEye');
+    addEyeToggle('reg-confirm', 'toggleRegConfirmEye');
+
+    const registerModal = $('registerModal');
+    const twoFAModal = $('twoFAModal');
+    on($('show-register'), 'click', (e) => { e.preventDefault(); if (registerModal) showFlex(registerModal); });
+    on($('closeRegister'), 'click', () => closeModal('registerModal'));
+    on($('close2FA'), 'click', () => closeModal('twoFAModal'));
+
+    on($('loginForm'), 'submit', async (e) => {
+      e.preventDefault();
+      const form = e.currentTarget;
+      const email = (form.email?.value || '').trim();
+      const password = form.password?.value || '';
+
+      setStatus('loginStatus', 'Signing in...');
+      try {
+        const data = await post('api/login.php', { email, password });
+        if (!data || data.ok === false) { setStatus('loginStatus', data?.error || 'Invalid response'); return; }
+
+        // Normalize both possible keys
+        const needs2FA = !!(data.twofa_required || data.twofarequired);
+        const tempToken = data.temp_token || data.temptoken || '';
+
+        if (needs2FA) {
+          if (tempToken) window.sessionStorage.setItem('twofa_token', tempToken);
+          if (twoFAModal) openModal('twoFAModal', 'flex');
+          else window.location.href = `verify_2fa.php${tempToken ? ('?token=' + encodeURIComponent(tempToken)) : ''}`;
+          return;
         }
-      });
-    }
-  }
 
-  addEyeToggle('login-password', 'toggleEye');
-  addEyeToggle('reg-password', 'toggleRegEye');
-  addEyeToggle('reg-confirm', 'toggleRegConfirmEye');
-
-  // Login form submit
-  var loginForm = document.getElementById('loginForm');
-  if (loginForm) {
-    loginForm.addEventListener('submit', function(e) {
-      e.preventDefault();
-      var email = this.email.value;
-      var password = this.password.value;
-
-      fetch('api/login.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: `email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`
-      }).then(res => res.json())
-        .then(data => {
-          if (data.success) {
-            // Save email for 2FA session
-            fetch('api/set_session.php', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-              body: `email=${encodeURIComponent(email)}`
-            }).then(() => show2FA());
-          } else {
-            alert(data.error || 'Login failed');
-          }
-        }).catch(() => alert('Login error'));
-    });
-  }
-
-  // Register modal
-  var registerModal = document.getElementById('registerModal');
-  var showRegisterBtn = document.getElementById('show-register');
-  var closeRegisterBtn = document.getElementById('closeRegister');
-
-  if (showRegisterBtn && registerModal) {
-    showRegisterBtn.addEventListener('click', function(e){
-      e.preventDefault();
-      registerModal.classList.add('show');
-    });
-  }
-  if (closeRegisterBtn && registerModal) {
-    closeRegisterBtn.addEventListener('click', function(){
-      registerModal.classList.remove('show');
-      var regForm = document.getElementById('registerForm');
-      var regSuccess = document.getElementById('regSuccessMsg');
-      var regBody = document.getElementById('registerModalBody');
-      if (regForm) regForm.reset();
-      if (regSuccess) regSuccess.classList.add('d-none');
-      if (regBody) regBody.classList.remove('d-none');
-      var regStatus = document.getElementById('regStatus');
-      if (regStatus) regStatus.textContent = '';
-    });
-  }
-
-  // Register form submit
-  var regForm = document.getElementById('registerForm');
-  if (regForm) {
-    regForm.onsubmit = function(e) {
-      e.preventDefault();
-      var email = this.email.value;
-      var password = this['reg-password'].value;
-      var confirm = this['reg-confirm'].value;
-      var regStatus = document.getElementById('regStatus');
-
-      if (!/@slssr\.edu(\.ph)?$/.test(email)) {
-        if (regStatus) regStatus.textContent = 'Only @slssr.edu(.ph) emails are allowed.';
-        return;
+        setStatus('loginStatus', 'Success. Redirecting...');
+        window.location.href = 'dashboard.php';
+      } catch (err) {
+        console.error(err);
+        setStatus('loginStatus', 'Network error. Please try again.');
       }
-      if (password !== confirm) {
-        if (regStatus) regStatus.textContent = 'Passwords do not match!';
-        return;
-      }
-      // Use AJAX to register
-      var formData = new URLSearchParams(new FormData(this));
+    });
 
-      fetch('api/register.php', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: formData.toString()
-      })
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) {
-          var regBody = document.getElementById('registerModalBody');
-          var regSuccess = document.getElementById('regSuccessMsg');
-          if (regBody && regSuccess) {
-            regBody.classList.add('d-none');
-            regSuccess.classList.remove('d-none');
-            document.getElementById('userSecret').textContent = data.secret || 'Error generating secret';
-          }
-        } else {
-          if (regStatus) regStatus.textContent = data.error || 'Registration failed';
+    wire2FATiles('twoFAForm', '.tiles input', 'twoFAStatus', async (code) => {
+      setStatus('twoFAStatus', 'Verifying code...');
+      try {
+        const tempToken = window.sessionStorage.getItem('twofa_token') || '';
+        const data = await post('api/verify_2fa.php', { code, temp_token: tempToken });
+        if (!data || data.ok === false) {
+          const modalContent = qs('#twoFAModal .modal-content');
+          if (modalContent) { modalContent.classList.add('shake'); setTimeout(() => modalContent.classList.remove('shake'), 550); }
+          setStatus('twoFAStatus', data?.error || 'Invalid 2FA code. Try again.');
+          console.log("Attaching submit handler to twoFAForm");
+          qsa('#twoFAForm .tiles input').forEach(t => t.value = '');
+          qs('#twoFAForm .tiles input')?.focus();
+          return;
         }
-      }).catch(() => {
-        if (regStatus) regStatus.textContent = 'Error submitting registration';
-      });
-    };
-  }
-
-  // 2FA Modal logic
-  var twoFAModal = document.getElementById('twoFAModal');
-  var close2FABtn = document.getElementById('close2FA');
-  
-  window.show2FA = function() {
-    if (twoFAModal) {
-      twoFAModal.classList.add('show');
-      setTimeout(function() {
-        var t = document.querySelector('#faCodeTiles input');
-        if (t) t.focus();
-      }, 100);
-    }
-  };
-
-  if (close2FABtn && twoFAModal) {
-    close2FABtn.addEventListener('click', function() {
-      twoFAModal.classList.remove('show');
-      twoFAModal.dataset.shake = '';
-      var faForm = document.getElementById('twoFAForm');
-      if (faForm) faForm.reset();
-    });
-  }
-
-  // 2FA tiles logic and submit via AJAX
-  var faCodeTilesParent = document.getElementById('faCodeTiles');
-  if (faCodeTilesParent) {
-    var faCodeTiles = faCodeTilesParent.querySelectorAll('input');
-    faCodeTiles.forEach(function(tile, idx) {
-      tile.addEventListener('input', function() {
-        if(this.value.length === 1 && idx < faCodeTiles.length - 1)
-          faCodeTiles[idx+1].focus();
-        if(Array.from(faCodeTiles).every(el=>el.value.length === 1)){
-          var faForm = document.getElementById('twoFAForm');
-          if (faForm) faForm.requestSubmit();
-        }
-      });
-      tile.addEventListener('keydown', function(e) {
-        if (e.key === 'Backspace' && !this.value && idx > 0) faCodeTiles[idx-1].focus();
-      });
+        setStatus('twoFAStatus', '2FA success. Redirecting...');
+        window.sessionStorage.removeItem('twofa_token');
+        window.location.href = 'dashboard.php';
+      } catch (err) {
+        console.error(err);
+        setStatus('twoFAStatus', 'Network error. Please try again.');
+      }
     });
 
-    var faForm = document.getElementById('twoFAForm');
-    if (faForm) {
-      faForm.onsubmit = function(e) {
-        e.preventDefault();
-        var code = '';
-        faCodeTiles.forEach(function(tile){ code += tile.value; });
-
-        fetch('api/verify_2fa.php', {
-          method: 'POST',
-          headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-          body: 'code=' + encodeURIComponent(code)
-        })
-        .then(res => res.json())
-        .then(data => {
-          if (data.success) {
-            window.location.href = data.redirect || 'dashboard.php';
-          } else {
-            alert(data.error || 'Invalid 2FA code');
-            twoFAModal.dataset.shake = '1';
-            setTimeout(() => { twoFAModal.dataset.shake = ''; }, 350);
-            faCodeTiles.forEach(tile => tile.value = '');
-            faCodeTiles[0].focus();
-          }
-        })
-        .catch(() => alert('Error validating 2FA'));
-      };
-    }
-  }
-
-  // Google button stubs
-  var googleSignIn = document.getElementById('googleSignIn');
-  if (googleSignIn) {
-    googleSignIn.addEventListener('click', function() {
-      alert("Google sign-in logic goes here. Only @slssr.edu(.ph) allowed.");
-    });
-  }
-  var googleReg = document.getElementById('googleReg');
-  if (googleReg) {
-    googleReg.addEventListener('click', function() {
-      alert("Google register logic goes here. Only @slssr.edu(.ph) allowed.");
-    });
-  }
-
-  // Register form validation
-  var regForm = document.getElementById('registerForm');
-  if (regForm) {
-    regForm.onsubmit = function(e){
+    on($('registerForm'), 'submit', async (e) => {
       e.preventDefault();
-      var email = this.email.value;
-      var password = document.getElementById('reg-password')?.value;
-      var confirm = document.getElementById('reg-confirm')?.value;
-      var regStatus = document.getElementById('regStatus');
-      if (!/@slssr\.edu(\.ph)?$/.test(email)) {
-        if (regStatus) regStatus.textContent = 'Only @slssr.edu(.ph) emails are allowed.';
-        return;
+      const form = e.currentTarget;
+      const name = (form.name?.value || '').trim();
+      const email = (form.email?.value || '').trim();
+      const password = form.password?.value || '';
+      const confirm = form['reg-confirm']?.value || '';
+      const role = form.role?.value || 'student';
+
+      if (!name || !email || !password || !confirm) { setStatus('regStatus', 'Please fill out all fields.'); return; }
+      if (password !== confirm) { setStatus('regStatus', 'Passwords do not match.'); return; }
+
+      setStatus('regStatus', 'Registering...');
+      try {
+        const data = await post('register.php', { name, email, password, role });
+        if (!data || data.ok === false) { setStatus('regStatus', data?.error || 'Registration failed.'); return; }
+        setStatus('regStatus', 'Registration successful. You can now sign in.');
+        setTimeout(() => closeModal('registerModal'), 800);
+      } catch (err) {
+        console.error(err);
+        setStatus('regStatus', 'Network error. Please try again.');
       }
-      if (password !== confirm) {
-        if (regStatus) regStatus.textContent = 'Passwords do not match!';
-        return;
-      }
-      var regBody = document.getElementById('registerModalBody');
-      var regSuccess = document.getElementById('regSuccessMsg');
-      if (regBody && regSuccess) {
-        regBody.classList.add('d-none');
-        regSuccess.classList.remove('d-none');
-        document.getElementById('userSecret').textContent = 'JBSWY3DPEHPK3PXP';
-      }
-    };
-  }
-});
+    });
+
+    on($('googleSignIn'), 'click', () => alert('Google sign-in is not implemented in this demo.'));
+    on($('googleReg'), 'click', () => alert('Google registration is not implemented in this demo.'));
+  });
+})();
