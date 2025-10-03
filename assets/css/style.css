@@ -1,15 +1,15 @@
-html, body {
+html,
+body {
   height: 100%;
-  margin-bottom: 0 !important;
-  padding-bottom: 0 !important;
+  margin: 0;
+  background: #f2efdf;
   font-family: 'Times New Roman', serif;
-  background: #F2EFDF;
 }
 
 .container-fluid {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  min-height: 10vh;
   padding: 0;
   overflow-x: hidden;
 }
@@ -24,298 +24,491 @@ html, body {
   min-width: 0;
 }
 
-
-/* School image left panel */
-.login-left, .bg-success {
-  background: center center / cover no-repeat, #017137;
-  min-height: 100vh;
-  padding: 0;
+/* Left school image - desktop */
+.login-left {
   position: relative;
-}
-@media (max-width: 900px) {
-  .login-left, .bg-success {
-    min-height: 210px;
-    background-size: cover;
-    width: 100vw;
-  }
-}
-
-/* Right login panel */
-.login-right, .bg-white {
+  background: url('assets/img/school-image.png') center center / cover no-repeat, #017137;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  align-items: flex-start;
   min-height: 100vh;
   padding: 0;
 }
-@media (max-width: 900px) {
-  .login-right, .bg-white {
-    min-height: 340px;
-    padding: 0;
-  }
-}
 
-/* Center the login card in right panel */
-.login-card {
-  max-width: 420px;
-  margin: 2.7rem auto 1.7rem auto;
-  width: 100%;
-  background: #faf9f5;
-  border-radius: 16px;
-  box-shadow: 0 4px 22px rgba(1,113,55,.13);
-  padding: 2em 2em 1.2em 2em;
-}
-@media (max-width: 650px) {
-  .login-card {
-    max-width: 98vw;
-    padding: .75em .4em .7em .4em;
-    border-radius: 0;
-  }
-}
-
-h2, .login-title { font-family: 'Baskerville', serif; font-weight: bold; color: #017137; }
-h2.text-success { color: #017137; font-size: 2.2rem; }
-@media (max-width: 650px) {
-  h2.text-success { font-size:1.35rem; margin-bottom:1.1rem; }
-}
-
-.google-btn {
-  display: flex !important;
-  align-items: center;
-  justify-content: center;
-  margin: 1.1rem auto 0.7rem auto;
-  width: 100%;
-  border-radius: 8px !important;
-}
-.google-btn img {height: 1.32em;}
-
-.input-group .form-control { border-radius: 6px 0 0 6px; }
-.input-group .btn { border-radius: 0 6px 6px 0; }
-.input-group .btn img {width: 22px;}
-
-.form-label { font-weight: 500; color: #017137;}
-small, .small { font-size: 0.93rem;}
-a { color: #017137; transition:color .13s;}
-a:hover { color: #f7e24b;}
-.status { min-height: 22px; color: #d92323; text-align: center; font-size: 1rem;}
-
-.btn-success, .btn-outline-secondary:active, .btn-outline-secondary:hover {
-  background: #017137;
-  border-color: #017137;
-  color: #fff;
-}
-.btn-outline-secondary {
-  background: #fff;
-  border: 1px solid #ced4da;
-  color: #555;
-}
-.btn-success:hover { background: #f7e24b; color: #017137; border-color: #f7e24b; }
-
-/* Footer: force to bottom, always below content */
-footer, .custom-footer {
-  width: 100vw;
-  background: #017137;
-  color: #fff;
-  z-index: 1000;
-  margin-top: 0;
-  padding-top: 0.15rem;
-  padding-bottom: 0.12rem;
-  position: relative;
-  box-shadow: 0 -3px 8px rgba(1,113,55,.09);
-}
-.footer-img {
-  width: 100%;
-  height: 52px;
-  object-fit: cover;
-}
-.footer-info {
-  color: #fff;
-  font-family: 'Times New Roman', serif;
-  text-align: center;
-  font-size: .97rem;
-  padding: 0.3rem 0 0.2rem 0;
-}
-
-@media (max-width: 650px) {
-  .footer-img {height: 38px;}
-  .footer-info { font-size: 0.85rem;}
-}
-
-/* Fix odd Bootstrap spacing on phone */
-@media (max-width:500px){
-  .login-card {
-    margin: 1rem 0 1rem 0;
-    padding: .4em .1em .5em .1em;
-  }
-}
-
-/* Remove unwanted scrollbars from side panels and card */
-body, .container-fluid, .row.flex-grow-1 {
-  overflow-x: hidden !important;
-}
-.login-left, .login-right, .login-card {
-  overflow: hidden !important;
-}
-
-.custom-footer {
-  background: #003319;
-  width: 100vw;
-  color: #fff;
-  margin: 0;
-  position: relative;
-  overflow: hidden;
-}
-
-.footer-liner svg { 
-  display: block; 
-  width: 100%; 
-  height: 33px; 
-}
-
-.footer-logo {
-  max-width: 100%;
+/* School logo top-left for desktop */
+.school-logo {
+  position: absolute;
+  left: 3vw;
+  top: 2.4vw;
+  width: 120px;
+  max-width: 180px;
+  min-width: 84px;
   height: auto;
-  max-height: 110px;
-  display: block;
-  margin: 0 auto 0.15em auto;
+  z-index: 10;
 }
 
-.footer-info {
-  font-family: 'Times New Roman', serif;
-  color: #fff;
-}
-
-.footer-title {
-  font-family: 'Baskerville', serif;
-  font-size: 1.4rem;
-  font-weight: bold;
-  color: #fff;
-  letter-spacing: 0.5px;
-  margin-bottom: 0.5rem;
-}
-
-.footer-subtitle {
-  font-size: 1.1rem;
-  color: #f7e24b;
-  font-weight: 500;
-  margin-bottom: 0.3rem;
-}
-
-.footer-tagline {
-  font-size: 1rem;
-  font-weight: bold;
-  color: #fff;
-  margin-bottom: 1rem;
-  letter-spacing: 0.3px;
-}
-
-.footer-contact {
-  font-size: 0.95rem;
-  line-height: 1.4;
-  color: #e8f5e8;
-}
-
-/* Desktop: Image left, text right */
-@media (min-width: 992px) {
-  .footer-info {
-    text-align: center !important;
+@media (min-width: 1600px) {
+  .school-logo {
+    width: 160px;
+    max-width: 240px;
+    left: 3vw;
+    top: 2vw;
   }
 }
 
-/* MOBILE: show school image as login panel background */
-@media (max-width: 900px) {
-  .login-left {
+/* Center logo for tablet and phone view */
+@media (max-width: 991.98px) {
+  .login-left,
+  .bg-success {
     display: none !important;
   }
+
   .login-right {
     background: url('assets/img/school-image.png') center center / cover no-repeat, #017137 !important;
     min-height: 100vh !important;
     width: 100vw !important;
-    box-shadow: none;
     position: relative;
-    color: #174537;
-    justify-content: center;
+  }
+
+  .school-logo {
+    position: static;
+    display: block;
+    margin: 1.5rem auto 1.2rem auto;
+    left: initial;
+    top: initial;
+    width: 102px;
+    max-width: 28vw;
+    min-width: 67px;
+    z-index: 4;
+  }
+}
+
+/* Even smaller for phone, logo always centered and shrinks slightly */
+@media (max-width: 575.98px) {
+  .school-logo {
+    display: block;
+    margin: 1.1rem auto 0.7rem auto;
+    width: 76px;
+    max-width: 30vw;
+    min-width: 56px;
+  }
+}
+
+/* Login right desktop */
+.login-right {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 0;
+  background: #fff;
+}
+
+/* Login card always centered */
+.login-card {
+  max-width: 420px;
+  width: 100%;
+  margin: 2.7rem auto 1.7rem auto;
+  background: #faf9f5;
+  border-radius: 16px;
+  box-shadow: 0 4px 22px rgba(1, 113, 55, 0.13);
+  padding: 2em 2em 1.2em 2em;
+}
+
+h2,
+.login-title {
+  font-family: 'Baskerville', serif;
+  font-weight: bold;
+  color: #017137;
+}
+
+h2.text-success {
+  font-size: 2.2rem;
+}
+
+@media (max-width: 650px) {
+  h2.text-success {
+    font-size: 1.35rem;
+    margin-bottom: 1.1rem;
+  }
+}
+
+/* Footer responsive layout */
+footer,
+.custom-footer {
+  width: 100vw;
+  background: #00401fe6;
+  color: #fff;
+  min-height: 20px;
+  margin: 0;
+  position: relative;
+  padding-top: 0.18rem;
+  padding-bottom: 0.18rem;
+  box-shadow: 0 -3px 8px rgba(1, 113, 55, 0.09);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.footer-stack {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  gap: 1.7rem;
+}
+
+/* Logo always sized right */
+.footer-logo {
+  max-width: 500px;
+  width: 29vw;
+  min-width: 70px;
+  height: auto;
+  display: block;
+}
+
+/* Info block always fits and stacks */
+.footer-info {
+  color: #fff;
+  font-family: 'Times New Roman', serif;
+  font-size: 1.08em;
+  line-height: 1.23;
+  word-break: break-word;
+  text-align: center;
+}
+
+@media (max-width: 1084px) {
+  .footer-stack {
+    flex-direction: column;
+    gap: 0.3rem;
     align-items: center;
   }
-  .login-card {
-    background: rgba(255, 255, 255, 0.97);
-    border-radius: 12px;
-    margin: 2rem auto;
-    max-width: 95vw;
-    width: 100%;
-    box-shadow: 0 6px 28px rgba(1, 113, 55, 0.18);
+
+  .footer-logo {
+    margin-bottom: 0.18em;
+    max-width: 120vw;
+    min-width: 40px;
+  }
+
+  .footer-info {
+    font-size: 0.97em;
+    text-align: center;
+    padding: 0;
+    margin: 0;
   }
 }
 
+@media (max-width: 450px) {
+  .footer-stack {
+    gap: 0.15rem;
+  }
 
-/* Small screens: extra compact */
-@media (min-width: 650px) {
-  .login-left {
-    display: none !important;
-  }
-  .login-right {
-    background: url('dsa-school/assets/img/school-image.png') center center / cover no-repeat, #017137 !important;
-    min-height: 100vh;
-    width: 100vw;
-    box-shadow: none;
-    position: relative;
-    color: #174537;
-  }
-  .login-card {
-    background: rgba(242,239,223, 0.95);
-    padding: .8em .15em .91em .15em;
-    border-radius: 8px;
-    margin: 1.1rem auto;
-  }
-  .footer-info, .footer-contact {
-    display: block;
-    width: 100%;
-    font-size: 0.95em;
-    padding-bottom: 4px;
-    /* Optionally add: */
-    word-break: break-word;
-  }
   .footer-logo {
-    max-width: 80vw;
-    margin: 0 auto 8px auto;
-    display: block !important;
+    max-width: 60vw;
+    min-width: 24px;
+  }
+
+  .footer-info {
+    font-size: 0.78em;
+    line-height: 1.13;
   }
 }
 
-/* Very small: remove border-radius (optional for edge-to-edge look) */
-@media (min-width: 375px) {
-  .login-left {
-    display: none !important;
+/* UTILITIES */
+body,
+.container-fluid,
+.row.flex-grow-1 {
+  overflow-x: hidden !important;
+}
+
+.login-left,
+.login-right,
+.login-card {
+  overflow: hidden !important;
+}
+
+/* Modal basic style */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1300;
+  background: rgba(0, 0, 0, 0.5); /* Soft overlay */
+  --bs-backdrop-bg: rgba(0, 0, 0, 0.5) !important;
+  --bs-backdrop-opacity: 1 !important;
+  align-items: center;
+  justify-content: center;
+  display: none;
+}
+
+.modal-backdrop.show {
+  display: flex;
+}
+
+.modal-dialog {
+  background: none;
+  border: none;
+  width: 100%;
+  max-width: 388px;
+  min-width: 260px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-content {
+  background: #808080 !important;
+  padding: 1.6em 1.1em;
+  border-radius: 18px;
+  box-shadow: 0 4px 36px rgba(44, 80, 72, 0.27);
+  width: 100%;
+  max-width: 368px;
+  position: relative;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.modal-title {
+  font-size: 1.22em;
+  font-family: 'Baskerville', serif;
+  color: #017137;
+}
+
+.modal-close {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  background: none;
+  border: none;
+  font-size: 1.7em;
+  color: #c3c3c3;
+  opacity: 0.74;
+  cursor: pointer;
+  z-index: 9;
+  line-height: 1;
+}
+
+/* Buttons */
+.btn-google {
+  background: #f7e24b;
+  color: #263622;
+  font-weight: 600;
+  border: none;
+  border-radius: 7px;
+  cursor: pointer;
+}
+
+.btn-google img {
+  vertical-align: middle;
+  margin-right: 0.2em;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="date"] {
+  width: 100%;
+  border-radius: 7px;
+  border: 1px solid #c2c9c7;
+  padding: 0.65em 0.8em;
+  margin-bottom: 8px;
+  font-size: 1.02em;
+}
+
+.btn-register,
+.btn-2fa-submit {
+  background: #017137;
+  color: #fff;
+  border: none;
+  border-radius: 7px;
+  font-size: 1.13em;
+  padding: 0.6em 0;
+  font-weight: 600;
+  transition: background 0.16s;
+  cursor: pointer;
+}
+
+.btn-register:hover,
+.btn-2fa-submit:hover {
+  background: #f7e24b;
+  color: #017137;
+}
+
+/* Eye button for password toggle */
+.eye-toggle {
+  background: none;
+  border: none;
+  position: absolute;
+  right: 8px;
+  top: 5px;
+  padding: 3px 2px;
+  cursor: pointer;
+}
+
+.eye-toggle img {
+  width: 22px;
+  height: 22px;
+}
+
+/* Code input grid */
+.code-grid {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  gap: 0.62em;
+  margin-bottom: 1em;
+}
+
+.code-grid input[type="text"],
+.code-grid input[type="number"] {
+  width: 2.2em;
+  font-size: 1.68em;
+  text-align: center;
+  border-radius: 7px;
+  border: 1.4px solid #ddd;
+  padding: 0.3em 0;
+}
+
+.remember-me {
+  font-size: 0.97em;
+  color: #175f38;
+  margin-top: 0.4em;
+  display: block;
+  text-align: center;
+}
+
+.secret-key {
+  font-size: 1.2em;
+  font-family: monospace;
+  background: #f5ffe1;
+  border-radius: 4px;
+  padding: 0.43em 1.1em;
+  letter-spacing: 0.03em;
+  text-align: center;
+  margin-top: 6px;
+}
+
+/* Modal animation */
+.modal-backdrop[data-shake="1"] .modal-content {
+  animation: shake 0.32s 1;
+}
+
+@keyframes shake {
+  10%, 30%, 50%, 70%, 90% {
+    transform: translateX(-9px);
   }
-  .login-right {
-    background: url('dsa-school/assets/img/school-image.png') center center / cover no-repeat, #017137 !important;
-    min-height: 100vh;
-    width: 100vw;
-    box-shadow: none;
-    position: relative;
-    color: #174537;
-  }
-  .login-card {
-    background: rgba(242,239,223, 0.95);
-    border-radius: 0;
-    background: rgba(255,255,255,0.97);
-    margin: 0.3rem 0;
-  }
-  .footer-logo {
-    display: block !important;
-    max-width: 70vw; /* smaller max-width on phones */
-  }
-  .footer-info, .footer-contact {
-    display: block;
-    width: 100%;
-    font-size: 0.95em;
-    padding-bottom: 4px;
-    /* Optionally add: */
-    word-break: break-word;
-  }
-  .footer-logo {
-    max-width: 80vw;
-    margin: 0 auto 8px auto;
-    display: block !important;
+
+  20%, 40%, 60%, 80% {
+    transform: translateX(9px);
   }
 }
+
+.d-none {
+  display: none !important;
+}
+
+/* Additional Modal Specific Fixes */
+.modal-backdrop {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
+  background: #fff !important;
+}
+
+/* Input wrapper for password toggle */
+.input-wrapper {
+  position: relative;
+  width: 100%;
+  margin-bottom: 0.75rem;
+}
+
+.input-wrapper input {
+  width: 100%;
+  padding-right: 2.8em;
+  margin-bottom: 0;
+}
+
+.input-wrapper .eye-toggle {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.input-wrapper .eye-toggle img {
+  width: 20px;
+  height: 20px;
+}
+
+/* Form input spacing */
+.modal-body .mb-2 {
+  margin-bottom: 0.75rem;
+}
+
+.modal-body input[type="text"],
+.modal-body input[type="email"],
+.modal-body input[type="password"],
+.modal-body input[type="date"],
+.modal-body select {
+  width: 100%;
+  border-radius: 7px;
+  border: 1px solid #c2c9c7;
+  padding: 0.7em 0.9em;
+  font-size: 1em;
+  margin-bottom: 0;
+}
+
+.modal-body select {
+  background: #fff;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8'><path fill='%23333' d='M0 0l6 8 6-8z'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 0.8em center;
+  padding-right: 2.5em;
+}
+
+.modal-body .btn-google {
+  width: 100%;
+  padding: 0.65em;
+  margin-bottom: 0.75rem;
+}
+
+.code-grid {
+  width: 100%;
+  max-width: 19em;     /* Keeps tiles inside modal; tune as needed */
+  margin: 0 auto 1em auto;
+  display: flex;
+  justify-content: center;
+  gap: 9px;
+  flex-wrap: wrap;
+}
+.code-grid input {
+  width: 2.2em;
+  height: 2.2em;
+  font-size: 1.15em;
+  text-align: center;
+  border-radius: 7px;
+  border: 1.4px solid #ddd;
+  padding: 0;
+  box-sizing: border-box;
+  background: #fff;
+  margin: 0;
+}
+@media (max-width: 600px) {
+  .code-grid { max-width: 99vw; gap: 6px; }
+  .code-grid input { width: 2.08em; height: 2.08em; font-size: 1em; }
+}
+

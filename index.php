@@ -99,32 +99,42 @@
           <img src="assets/img/google.svg" class="me-2" style="height:1.1em;"> Sign up with Google
         </button>
         <hr class="mb-2 mt-2"/>
-        <form id="registerForm" autocomplete="off">
-          <div class="mb-2"><input type="text" placeholder="First Name" name="first" required></div>
-          <div class="mb-2"><input type="text" placeholder="Last Name" name="last" required></div>
-          <div class="mb-2"><input type="date" placeholder="Birthday" name="bday" required></div>
-          <div class="mb-2">
-            <input type="email" placeholder="Email (@slssr.edu.ph)" pattern="^[^@\\s]+@slssr.edu\\.ph$" name="email" required>
-          </div>
-          <div class="mb-2 position-relative">
-            <input type="password" placeholder="Password" id="regPassword" required>
-            <button type="button" class="eye-toggle" id="toggleRegPw"><img src="assets/img/password_show.svg" alt="Show"></button>
-          </div>
-          <div class="mb-2 position-relative">
-            <input type="password" placeholder="Confirm Password" id="regConPassword" required>
-            <button type="button" class="eye-toggle" id="toggleRegConPw"><img src="assets/img/password_show.svg" alt="Show"></button>
-          </div>
-        <div class="mb-2">
-          <select name="role" required>
-            <option value="" disabled selected>Select your role</option>
-            <option value="Student">Student</option>
-            <option value="Parent">Parent</option>
-            <option value="Faculty">Faculty</option>
-            <option value="Staff">Staff</option>
-            <option value="Administrator">Administrator</option>
-          </select>
-          <button class="btn-register w-100 mt-2" type="submit" id="registerBtn">Register</button>
-        </form>
+<form id="registerForm" autocomplete="off">
+  <div class="mb-2">
+    <input type="text" placeholder="First Name" name="first" required>
+  </div>
+  <div class="mb-2">
+    <input type="text" placeholder="Last Name" name="last" required>
+  </div>
+  <div class="mb-2">
+    <input type="date" placeholder="Birthday" name="bday" required>
+  </div>
+  <div class="mb-2">
+    <input type="email" placeholder="Email (@slssr.edu.ph)" pattern="^[^@\\s]+@slssr\\.edu\\.ph$" name="email" required>
+  </div>
+  <div class="mb-2">
+    <select name="role" required>
+      <option value="" disabled selected>Select your role</option>
+      <option value="Student">Student</option>
+      <option value="Faculty">Faculty</option>
+      <option value="Staff">Staff</option>
+      <option value="Administrator">Administrator</option>
+    </select>
+  </div>
+  <div class="mb-2 input-wrapper">
+    <input type="password" placeholder="Password" id="reg-password" required>
+    <button type="button" class="eye-toggle" id="toggleRegEye">
+      <img src="assets/img/password_show.svg" alt="Show">
+    </button>
+  </div>
+  <div class="mb-2 input-wrapper">
+    <input type="password" placeholder="Confirm Password" id="reg-confirm" required>
+    <button type="button" class="eye-toggle" id="toggleRegConfirmEye">
+      <img src="assets/img/password_show.svg" alt="Show">
+    </button>
+  </div>
+  <button class="btn-register w-100 mt-2" type="submit" id="registerBtn">Register</button>
+</form>
       </div>
       <div class="modal-body d-none" id="regSuccessMsg">
         <p>Registration successful! Here’s your secret key for Google Auth:</p>

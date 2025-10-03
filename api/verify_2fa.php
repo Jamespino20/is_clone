@@ -1,20 +1,40 @@
 <?php
-require_once __DIR__ . '/helpers.php';
-header('Content-Type: application/json');
-session_start();
-$code = $_POST['code'] ?? '';
-$temp = $_POST['temp_token'] ?? '';
-if(empty($_SESSION['temp_token']) || empty($_SESSION['temp_user_email']) || $_SESSION['temp_token']!==$temp){ echo json_encode(['ok'=>false,'error'=>'Invalid temp token']); exit; }
-$email = $_SESSION['temp_user_email'];
-$user = find_user_by_email($email);
-if(!$user){ echo json_encode(['ok'=>false,'error'=>'User not found']); exit; }
-if(empty($user['totp_secret'])){ echo json_encode(['ok'=>false,'error'=>'2FA not set up for this user']); exit; }
-if(!totp_verify($user['totp_secret'], $code)){
-	echo json_encode(['ok'=>false,'error'=>'Invalid or expired 2FA code']); exit;
-}
-// Success: promote to session
-$_SESSION['user_email'] = $email;
-unset($_SESSION['temp_token'], $_SESSION['temp_user_email']);
-echo json_encode(['ok'=>true]);
+require_once 'vendor/autoload.php';
+require_once 'helpers.php';
 
+use OTPHP\TOTP;
+
+session_start();
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+  $code = $_POST['code'] ?? '';
+  $email = $_SESSION['email'] ?? '';
+
+  if (!$email) {
+    http_response_code(403);
+    echo json_encode(['error' => 'No login session']);
+    exit;
+  }
+
+  $user = get_user_by_email($email);
+
+  if (!$user || !isset($user['totp_secret'])) {
+    http_response_code(403);
+    echo json_encode(['error' => 'User not found or 2FA not set']);
+    exit;
+  }
+
+  $totp = TOTP::create($user['totp_secret']);
+
+  if ($totp->verify($code)) {
+    $_SESSION['logged_in'] = true;
+    http_response_code(200);
+    echo json_encode(['success' => true, 'redirect' => 'dashboard.php']);
+    exit;
+  } else {
+    http_response_code(401);
+    echo json_encode(['error' => 'Invalid 2FA code']);
+    exit;
+  }
+}
 ?>
