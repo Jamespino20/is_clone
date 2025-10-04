@@ -1,0 +1,38 @@
+[
+    {
+        "name": "James Bryant Admin",
+        "email": "espino.jamesbryant20+admin@gmail.com",
+        "password": "$2y$10$AGhC6He4O8F5X5F5DxFXIewN94jb3.q2.OTH4p.pmThMyo4P35WiS",
+        "role": "Administrator",
+        "created": 1759574258,
+        "totp_secret": "4S7WC6EX7SKT5Z2C",
+        "sessions": []
+    },
+    {
+        "name": "James Bryant Staff",
+        "email": "espino.jamesbryant20+staff@gmail.com",
+        "password": "$2y$10$CBvXjKgPbULJdGzJxsfzFuMC36iyINerdgS7kTrq4XCdEQAfsiUa2",
+        "role": "Staff",
+        "created": 1759574318,
+        "totp_secret": "46GOUTUMBT23AM4C",
+        "sessions": []
+    },
+    {
+        "name": "James Bryant Faculty",
+        "email": "espino.jamesbryant20+faculty@gmail.com",
+        "password": "$2y$10$JaSnrjQCbwljN66CesJTGOhW4fg4BizW.JlEToRJ9mSpbcpoQwBy2",
+        "role": "Faculty",
+        "created": 1759574397,
+        "totp_secret": "FKFEV5I3PO5XW2UW",
+        "sessions": []
+    },
+    {
+        "name": "James Bryant Student",
+        "email": "espino.jamesbryant20+student@gmail.com",
+        "password": "$2y$10$L2g8ee7POpXFUaAzXWLAxOwKOUDBJN2bDselaPnCjtjyLTuhevRSK",
+        "role": "Student",
+        "created": 1759574457,
+        "totp_secret": "LWQUG4B2NRC3JKVY",
+        "sessions": []
+    }
+]
