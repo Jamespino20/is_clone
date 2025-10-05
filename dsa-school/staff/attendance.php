@@ -198,30 +198,40 @@ if (!$user || !has_permission(get_role_display_name($user['role']), 'Staff')) {
         async function loadStudentsForAttendance(date, grade, section) {
             try {
                 // Get students from the students API
-                const response = await fetch('../api/students_api.php?action=list');
+                const response = await fetch('../api/students_api.php?action=list', {
+                    credentials: 'same-origin'
+                });
                 const data = await response.json();
 
                 if (!data.ok) {
-                    showError('Failed to load students');
+                    showError('Failed to load students: ' + (data.error || 'Unknown error'));
                     return;
                 }
+
+                console.log('Students loaded:', data.items.length);
+                console.log('Sample student:', data.items[0]);
 
                 // Filter students by grade and section
                 const filteredStudents = data.items.filter(student =>
                     student.grade_level === grade && student.section === section
                 );
 
+                console.log(`Filtered students for ${grade} ${section}:`, filteredStudents.length);
+
                 // Load existing attendance records for this date/grade/section
-                const attResponse = await fetch(`../api/staff_attendance.php?action=list&date=${date}&grade=${encodeURIComponent(grade)}&section=${encodeURIComponent(section)}`);
+                const attResponse = await fetch(`../api/staff_attendance.php?action=list&date=${date}&grade=${encodeURIComponent(grade)}&section=${encodeURIComponent(section)}`, {
+                    credentials: 'same-origin'
+                });
                 const attData = await attResponse.json();
-                
+
                 const existingRecords = attData.ok ? attData.items : [];
-                
+
                 renderAttendanceTable(filteredStudents, existingRecords);
                 document.getElementById('attendanceSection').style.display = 'block';
 
             } catch (error) {
                 showError('Error loading students: ' + error.message);
+                console.error('Error in loadStudentsForAttendance:', error);
             }
         }
 
@@ -294,7 +304,7 @@ if (!$user || !has_permission(get_role_display_name($user['role']), 'Staff')) {
 
                 const result = await response.json();
                 if (result.ok) {
-                    showSuccess('showSuccess('Attendance saved successfully!');
+                    showSuccess('Attendance saved successfully!');
                     // Refresh the summary
                     loadAttendanceSummary();
                 } else {
@@ -332,7 +342,7 @@ if (!$user || !has_permission(get_role_display_name($user['role']), 'Staff')) {
         document.getElementById('attGrade').addEventListener('change', loadSectionsForGrade);
 
         function generateReport(type) {
-            showInfo(`Generating ${type} attendance report...`);
+            alert('Generating ' + type + ' attendance report...');
         }
     </script>
 </body>

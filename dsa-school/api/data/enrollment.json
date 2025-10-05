@@ -1,11 +1,59 @@
 {
     "yearLevels": [
-        "1",
-        "10"
+        "Kinder",
+        "Grade 1",
+        "Grade 2",
+        "Grade 3",
+        "Grade 4",
+        "Grade 5",
+        "Grade 6",
+        "Grade 7",
+        "Grade 8",
+        "Grade 9",
+        "Grade 10"
     ],
     "sections": {
-        "10": [
+        "Kinder": [
             "St. Luke"
+        ],
+        "Grade 1": [
+            "St. Luke"
+        ],
+        "Grade 2": [
+            "St. Luke"
+        ],
+        "Grade 3": [
+            "St. Luke"
+        ],
+        "Grade 4": [
+            "St. Luke"
+        ],
+        "Grade 5": [
+            "St. Luke"
+        ],
+        "Grade 6": [
+            "St. Luke"
+        ],
+        "Grade 7": [
+            "St. Luke",
+            "St. Matthew",
+            "St. Mark"
+        ],
+        "Grade 8": [
+            "St. Luke",
+            "St. Matthew",
+            "St. Mark"
+        ],
+        "Grade 9": [
+            "St. Luke",
+            "St. Matthew",
+            "St. Mark"
+        ],
+        "Grade 10": [
+            "St. Luke",
+            "St. Matthew",
+            "St. Mark"
         ]
-    }
+    },
+    "student_assignments": {}
 }

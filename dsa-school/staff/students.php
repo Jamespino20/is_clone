@@ -208,7 +208,22 @@ $students = [];
         });
         let students = [];
         async function loadStudents(){
-            try { const r = await fetch('../api/students_api.php?action=list'); const d = await r.json(); if (d.ok) { students = d.items||[]; renderStudents(); } } catch {}
+            try {
+                const r = await fetch('../api/students_api.php?action=list', {
+                    credentials: 'same-origin'
+                });
+                const d = await r.json();
+                if (d.ok) {
+                    students = d.items||[];
+                    console.log('Students loaded:', students.length);
+                    console.log('Sample student:', students[0]);
+                    renderStudents();
+                } else {
+                    console.error('Students API error:', d.error);
+                }
+            } catch (error) {
+                console.error('Error loading students:', error);
+            }
         }
         function renderStudents(){
             const tbody = document.querySelector('#studentsTable tbody');
@@ -238,14 +253,13 @@ $students = [];
         // Search functionality
         document.getElementById('studentSearch').addEventListener('input', filterStudents);
         document.getElementById('statusFilter').addEventListener('change', filterStudents);
-        document.getElementById('gradeFilter').addEventListener('change', filterStudents);
         document.getElementById('yearLevelSelect').addEventListener('change', filterStudents);
         document.getElementById('sectionSelect').addEventListener('change', filterStudents);
         
         function filterStudents() {
             const searchTerm = document.getElementById('studentSearch').value.toLowerCase();
             const statusFilter = document.getElementById('statusFilter').value;
-            const gradeFilter = document.getElementById('gradeFilter').value;
+            const gradeFilter = '';
             
             const rows = document.querySelectorAll('#studentsTable tbody tr');
             
@@ -296,8 +310,17 @@ $students = [];
                 const sSel = document.getElementById('sectionSelect');
                 ySel.innerHTML = '<option value="">All Grades</option>' + years.map(y=>`<option>${y}</option>`).join('');
                 sSel.innerHTML = '<option value="">All Sections</option>';
+
+                // If there's a default year level selected, load its sections
+                const currentYear = ySel.value;
+                if (currentYear && sections[currentYear]) {
+                    const list = sections[currentYear];
+                    sSel.innerHTML = '<option value="">All Sections</option>' + list.map(s=>`<option>${s}</option>`).join('');
+                }
+
                 ySel.onchange = () => {
-                    const y = ySel.value; const list = (sections[y]||[]);
+                    const y = ySel.value;
+                    const list = (sections[y]||[]);
                     sSel.innerHTML = '<option value="">All Sections</option>' + list.map(s=>`<option>${s}</option>`).join('');
                     filterStudents();
                 };
@@ -353,8 +376,27 @@ $students = [];
             if (format === 'csv') {
                 exportAllStudentsCSV();
             } else if (format === 'pdf') {
-                showInfo('PDF export functionality coming soon!'));
+                showInfo('PDF export functionality coming soon!');
             }
+        }
+
+        function resetFilters(){
+            document.getElementById('studentSearch').value = '';
+            document.getElementById('statusFilter').value = '';
+            document.getElementById('yearLevelSelect').value = '';
+            document.getElementById('sectionSelect').value = '';
+            filterStudents();
+        }
+
+        function exportVisibleCSV(){
+            const rows = Array.from(document.querySelectorAll('#studentsTable tbody tr'))
+                .filter(r => r.style.display !== 'none')
+                .map(r => Array.from(r.cells).slice(0,8).map(td => '"' + (td.textContent||'').replace(/"/g,'""') + '"').join(','));
+            const header = '"Student ID","Name","Email","Grade/Section","Status","Tuition Balance","Attendance","GPA"';
+            const csv = [header, ...rows].join('\n');
+            const blob = new Blob([csv], { type:'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url; a.download = 'students_visible.csv'; a.click(); URL.revokeObjectURL(url);
         }
 
         async function exportAllStudentsCSV() {

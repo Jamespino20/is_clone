@@ -109,6 +109,26 @@ $userActivities = array_slice(array_filter($recentActivities, fn($a) => $a['user
                         <textarea id="notificationMessage" name="message" class="form-control" rows="3" required></textarea>
                     </div>
                 </div>
+
+                <!-- Preset Roles Section -->
+                <div class="row">
+                    <div class="col-md-12">
+                        <label class="form-label">Quick Add Recipients by Role</label>
+                        <div class="d-flex flex-wrap gap-2 mb-2">
+                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="addRoleRecipients('all_students')">All Students</button>
+                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="addRoleRecipients('grade_7_students')">Grade 7</button>
+                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="addRoleRecipients('grade_8_students')">Grade 8</button>
+                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="addRoleRecipients('grade_9_students')">Grade 9</button>
+                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="addRoleRecipients('grade_10_students')">Grade 10</button>
+                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="addRoleRecipients('kinder_students')">Kinder</button>
+                        </div>
+                        <select id="recipients" name="recipients[]" class="form-control" multiple style="min-height: 100px;">
+                            <option value="">Select recipients...</option>
+                        </select>
+                        <small class="text-muted">Selected recipients will appear above. Use Ctrl+Click to select multiple.</small>
+                    </div>
+                </div>
+
                 <button type="submit" class="btn btn-success mt-3">Send Notification</button>
             </form>
         </section>
@@ -151,6 +171,30 @@ $userActivities = array_slice(array_filter($recentActivities, fn($a) => $a['user
                 <?php endif; ?>
             </div>
         </section>
+
+        <!-- Sent Notifications (Admin/Staff only) -->
+        <?php if (has_permission($userRole, 'Staff')): ?>
+        <section class="card">
+            <h2>Sent Notifications</h2>
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Subject</th>
+                            <th>Recipients</th>
+                            <th>Sent Date</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="sentNotificationsTable">
+                        <tr>
+                            <td colspan="4" class="text-center text-muted">Loading sent notifications...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+        <?php endif; ?>
 
         <!-- Recent Activity -->
         <section class="card">
@@ -245,25 +289,51 @@ $userActivities = array_slice(array_filter($recentActivities, fn($a) => $a['user
 
         document.getElementById('sendNotificationForm')?.addEventListener('submit', function(e) {
             e.preventDefault();
-            
+
             const formData = new FormData(this);
             formData.append('action', 'send');
-            
-            fetch('api/notifications_api.php', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.ok) {
-                    showSuccess('Notification sent successfully!');
-                    location.reload();
+
+            // Handle multiple recipients
+            const recipientsSelect = document.getElementById('recipients');
+            const recipients = Array.from(recipientsSelect.selectedOptions)
+                .filter(option => option.value)
+                .map(option => option.value);
+
+            if (recipients.length === 0) {
+                showWarning('Please select at least one recipient.');
+                return;
+            }
+
+            // For now, we'll send individual notifications to each recipient
+            // In a real implementation, you might want to batch these
+            const promises = recipients.map(recipient => {
+                const recipientFormData = new FormData();
+                recipientFormData.append('action', 'send_notification');
+                recipientFormData.append('target_email', recipient);
+                recipientFormData.append('title', formData.get('title'));
+                recipientFormData.append('message', formData.get('message'));
+                recipientFormData.append('type', formData.get('type'));
+
+                return fetch('api/notifications_api.php', {
+                    method: 'POST',
+                    body: recipientFormData
+                }).then(response => response.json());
+            });
+
+            Promise.all(promises)
+            .then(results => {
+                const successCount = results.filter(r => r.ok).length;
+                if (successCount === recipients.length) {
+                    showSuccess(`Notification sent successfully to ${successCount} recipients!`);
+                    this.reset();
+                    // Clear recipients select
+                    recipientsSelect.innerHTML = '<option value="">Select recipients...</option>';
                 } else {
-                    showError('Error: ' + data.error);
+                    showWarning('Some notifications failed to send. Please try again.');
                 }
             })
             .catch(error => {
-                showError('Error: ' + error);
+                showError('Error: ' + error.message);
             });
         });
         
@@ -283,6 +353,179 @@ $userActivities = array_slice(array_filter($recentActivities, fn($a) => $a['user
                 }
             });
         }
-    </script>
-</body>
-</html>
+
+        // Student search functionality for notifications
+        let allStudents = [];
+        let studentSearchTimeout = null;
+
+        async function loadStudentsForSearch() {
+            try {
+                console.log('Loading students for search...');
+                const response = await fetch('api/students_api.php?action=list', {
+                    credentials: 'same-origin'
+                });
+                const data = await response.json();
+                console.log('Students API response:', data);
+                if (data.ok) {
+                    allStudents = data.items || [];
+                    console.log('Students loaded for search:', allStudents.length);
+                } else {
+                    console.error('Students API error:', data.error);
+                }
+            } catch (error) {
+                console.error('Error loading students:', error);
+            }
+        }
+
+        // Function to add preset role-based recipients
+        function addRoleRecipients(role) {
+            const recipientsSelect = document.getElementById('recipients');
+            if (!recipientsSelect) return;
+
+            // Role-based email patterns (you can customize these)
+            const roleEmails = {
+                'all_students': allStudents.map(s => s.email),
+                'grade_7_students': allStudents.filter(s => s.grade_level === 'Grade 7').map(s => s.email),
+                'grade_8_students': allStudents.filter(s => s.grade_level === 'Grade 8').map(s => s.email),
+                'grade_9_students': allStudents.filter(s => s.grade_level === 'Grade 9').map(s => s.email),
+                'grade_10_students': allStudents.filter(s => s.grade_level === 'Grade 10').map(s => s.email),
+                'kinder_students': allStudents.filter(s => s.grade_level === 'Kinder').map(s => s.email)
+            };
+
+            const emails = roleEmails[role] || [];
+            if (emails.length === 0) {
+                showWarning('No students found for the selected role.');
+                return;
+            }
+
+            emails.forEach(email => {
+                const option = document.createElement('option');
+                option.value = email;
+                option.textContent = email;
+                option.selected = true;
+                recipientsSelect.appendChild(option);
+            });
+
+            showSuccess(`Added ${emails.length} recipients for ${role.replace('_', ' ')}.`);
+        }
+
+        // Enhanced recent activity loading
+        async function loadRecentActivity() {
+            try {
+                const response = await fetch('api/activity_api.php?action=recent');
+                const data = await response.json();
+
+                if (data.ok && data.activities) {
+                    renderRecentActivity(data.activities);
+                } else {
+                    // Fallback to showing system activities
+                    const activities = <?= json_encode($userActivities) ?>;
+
+                    renderRecentActivity(activities);
+                }
+            } catch (error) {
+                console.error('Error loading recent activity:', error);
+                // Fallback to PHP-generated activities
+                const activities = <?= json_encode($userActivities) ?>;
+
+                renderRecentActivity(activities);
+            }
+        }
+
+        function renderRecentActivity(activities) {
+            const activityList = document.querySelector('.activity-list');
+            if (!activityList) return;
+
+            if (!activities || activities.length === 0) {
+                activityList.innerHTML = '<div class="text-center text-muted py-4"><p>No recent activity to display.</p></div>';
+                return;
+            }
+
+            const activityHtml = activities.slice(0, 10).map(activity => {
+                const actionIcons = {
+                    'login': '🔑',
+                    'logout': '🚪',
+                    'accessed_dashboard': '📊',
+                    'sent_notification': '📢',
+                    'viewed_student': '👨‍🎓',
+                    'updated_student': '✏️',
+                    'created_student': '➕',
+                    'deleted_student': '🗑️',
+                    'marked_attendance': '✅',
+                    'generated_report': '📈',
+                    'changed_settings': '⚙️'
+                };
+
+                const icon = actionIcons[activity.action] || '📋';
+                const details = activity.details ? `<p class="text-muted">${activity.details}</p>` : '';
+
+                return `
+                    <div class="activity-item">
+                        <span class="activity-icon">${icon}</span>
+                        <div class="activity-content">
+                            <p><strong>${formatActivityAction(activity.action)}</strong></p>
+                            ${details}
+                            <small class="text-muted">${new Date(activity.timestamp * 1000).toLocaleDateString('en-US', {
+                                month: 'short',
+                                day: 'numeric',
+                                year: 'numeric',
+                                hour: 'numeric',
+                                minute: '2-digit',
+                                hour12: true
+                            })}</small>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            activityList.innerHTML = activityHtml;
+        }
+
+        function formatActivityAction(action) {
+            const actionMap = {
+                'accessed_dashboard': 'Accessed Dashboard',
+                'sent_notification': 'Sent Notification',
+                'viewed_student': 'Viewed Student Record',
+                'updated_student': 'Updated Student Information',
+                'created_student': 'Added New Student',
+                'deleted_student': 'Removed Student',
+                'marked_attendance': 'Marked Attendance',
+                'generated_report': 'Generated Report',
+                'changed_settings': 'Modified Settings',
+                'login': 'Logged In',
+                'logout': 'Logged Out'
+            };
+
+            return actionMap[action] || action.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        }
+
+        // Load sent notifications for admin users
+        async function loadSentNotifications() {
+            try {
+                // For now, we'll show a placeholder since we don't have a sent notifications API yet
+                // In a real implementation, this would fetch sent notifications from the database
+                const sentTable = document.querySelector('#sentNotificationsTable');
+                if (!sentTable) {
+                    console.log('Sent notifications table not found - this is normal for non-admin users');
+                    return;
+                }
+
+                sentTable.innerHTML = `
+                    <tr>
+                        <td colspan="4" class="text-center text-muted">
+                            Sent notifications will appear here.<br>
+                            <small>This feature will be enhanced in a future update.</small>
+                        </td>
+                    </tr>
+                `;
+            } catch (error) {
+                console.error('Error loading sent notifications:', error);
+            }
+        }
+
+        // Load students and activity on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadStudentsForSearch();
+            loadRecentActivity();
+            loadSentNotifications();
+        });

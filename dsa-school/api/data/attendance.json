@@ -18,5 +18,45 @@
         "remarks": "Right on time as always",
         "recorded_by": "espino.jamesbryant20+faculty@gmail.com",
         "recorded_at": "2025-10-05 22:09:10"
+    },
+    {
+        "date": "2025-10-07",
+        "student_id": "espino.jamesbryant20+student@gmail.com",
+        "grade_level": "10",
+        "section": "Mathematics - Grade 10",
+        "status": "absent",
+        "remarks": "called in sick",
+        "recorded_by": "espino.jamesbryant20+faculty@gmail.com",
+        "recorded_at": "2025-10-06 01:48:36"
+    },
+    {
+        "date": "2025-10-07",
+        "student_id": "espino.jamesbryant20+student2@gmail.com",
+        "grade_level": "10",
+        "section": "Mathematics - Grade 10",
+        "status": "present",
+        "remarks": "",
+        "recorded_by": "espino.jamesbryant20+faculty@gmail.com",
+        "recorded_at": "2025-10-06 01:48:36"
+    },
+    {
+        "date": "2025-10-08",
+        "student_id": "espino.jamesbryant20+student@gmail.com",
+        "grade_level": "10",
+        "section": "Mathematics - Grade 10",
+        "status": "absent",
+        "remarks": "",
+        "recorded_by": "espino.jamesbryant20+faculty@gmail.com",
+        "recorded_at": "2025-10-06 01:48:51"
+    },
+    {
+        "date": "2025-10-08",
+        "student_id": "espino.jamesbryant20+student2@gmail.com",
+        "grade_level": "10",
+        "section": "Mathematics - Grade 10",
+        "status": "present",
+        "remarks": "",
+        "recorded_by": "espino.jamesbryant20+faculty@gmail.com",
+        "recorded_at": "2025-10-06 01:48:51"
     }
 ]
