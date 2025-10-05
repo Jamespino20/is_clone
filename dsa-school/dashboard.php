@@ -30,13 +30,47 @@ $dsManager->logActivity($email, 'dashboard_access', 'Accessed main dashboard');
 $allNotifications = $dsManager->getNotificationQueue()->getAll();
 $userNotifications = array_filter($allNotifications, function($n) use ($email, $user) {
     // Include personal notifications and system notifications for this user's role
-    return $n['user_email'] === $email || 
            (isset($n['is_system']) && $n['is_system'] && 
             (empty($n['target_roles']) || in_array($user['role'], $n['target_roles'])));
 });
 $unreadNotifications = array_filter($userNotifications, fn($n) => !$n['read']);
 $recentActivities = array_slice(array_filter($dsManager->getActivityStack()->getAll(), fn($a) => $a['user_email'] === $email), 0, 5);
 ?>
+<?php
+// Helper function to get user-friendly activity names
+function get_activity_display_name($action) {
+    $displayNames = [
+        'login' => 'Logged in',
+        'logout' => 'Logged out',
+        'profile_view' => 'Viewed profile',
+        'profile_update' => 'Updated profile',
+        'security_check' => 'Checked security settings',
+        'dashboard_access' => 'Accessed dashboard',
+        'notification_sent' => 'Sent notification',
+        'data_export' => 'Exported data',
+        'settings_updated' => 'Updated system settings',
+        'student_added' => 'Added new student',
+        'student_updated' => 'Updated student information',
+        'grade_recorded' => 'Recorded grade',
+        'attendance_marked' => 'Marked attendance',
+        'payment_processed' => 'Processed payment',
+        'document_requested' => 'Requested document',
+        'evaluation_submitted' => 'Submitted evaluation',
+        'assignment_submitted' => 'Submitted assignment',
+        'class_created' => 'Created class',
+        'section_assigned' => 'Assigned to section',
+        'report_generated' => 'Generated report',
+        'submit_evaluation' => 'Submitted evaluation',
+        'view_grades' => 'Viewed grades',
+        'view_attendance' => 'Viewed attendance',
+        'view_tuition' => 'Viewed tuition balance',
+        'view_documents' => 'Viewed documents'
+    ];
+
+    return $displayNames[$action] ?? ucfirst(str_replace('_', ' ', $action));
+}
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -46,35 +80,7 @@ $recentActivities = array_slice(array_filter($dsManager->getActivityStack()->get
   <link href="assets/css/style.css" rel="stylesheet">
 </head>
 <body>
-  <header class="topbar">
-    <div class="topbar-left">
-      <img src="assets/img/school-logo.png" alt="School Logo" class="topbar-logo">
-      <div class="topbar-title">
-        <h1>St. Luke's School of San Rafael</h1>
-        <span class="topbar-subtitle">Information System</span>
-      </div>
-    </div>
-    <div class="topbar-right">
-      <div class="user-info">
-        <span class="user-name">Welcome, <?= htmlspecialchars($user['name']) ?></span>
-        <span class="user-role"><?= get_role_display_name($user['role']) ?></span>
-      </div>
-      <nav>
-        <a href="profile.php" class="nav-link">Profile</a>
-        <a href="security.php" class="nav-link">Security</a>
-        <a href="notifications.php" class="nav-link">
-          🔔 Notifications
-          <?php if (count($unreadNotifications) > 0): ?>
-            <span class="badge bg-warning"><?= count($unreadNotifications) ?></span>
-          <?php endif; ?>
-        </a>
-        <?php if ($userRole === 'Administrator'): ?>
-          <a href="audit_logs.php" class="nav-link">📋 Audit Logs</a>
-        <?php endif; ?>
-        <a href="api/logout.php" class="nav-link logout">Logout</a>
-      </nav>
-    </div>
-  </header>
+  <?php $subtitle = 'Information System'; $assetPrefix = ''; include __DIR__ . '/partials/header.php'; ?>
 
   <main class="container">
     <!-- Search Bar -->
@@ -107,8 +113,22 @@ $recentActivities = array_slice(array_filter($dsManager->getActivityStack()->get
           <div class="stat-item">
             <div class="stat-icon">👥</div>
             <div class="stat-content">
-              <h3><?= count(read_users()) ?></h3>
+              <h3><?php $allUsers = read_users(); echo count($allUsers); ?></h3>
               <p>Total Users</p>
+            </div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-icon">👨‍🎓</div>
+            <div class="stat-content">
+              <h3><?php echo count(array_filter($allUsers, fn($u) => ($u['role'] ?? '') === 'Student')); ?></h3>
+              <p>Total Students</p>
+            </div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-icon">📄</div>
+            <div class="stat-content">
+              <h3><?= $dsManager->getDocumentRequestQueue()->size() ?></h3>
+              <p>Document Requests</p>
             </div>
           </div>
           <div class="stat-item">
@@ -126,6 +146,13 @@ $recentActivities = array_slice(array_filter($dsManager->getActivityStack()->get
             </div>
           </div>
           <div class="stat-item">
+            <div class="stat-icon">⭐</div>
+            <div class="stat-content">
+              <h3><?= $dsManager->getEvaluationResponseStack()->size() ?></h3>
+              <p>Eval Responses</p>
+            </div>
+          </div>
+          <div class="stat-item">
             <div class="stat-icon">💰</div>
             <div class="stat-content">
               <h3><?= $dsManager->getPaymentQueue()->size() ?></h3>
@@ -133,89 +160,206 @@ $recentActivities = array_slice(array_filter($dsManager->getActivityStack()->get
             </div>
           </div>
         <?php elseif ($userRole === 'Staff'): ?>
+          <?php
+          // Get live data for staff dashboard
+          $allStudents = [];
+          $studentsFile = __DIR__ . '/api/data/students.json';
+          if (file_exists($studentsFile)) {
+            $studentsRaw = @file_get_contents($studentsFile);
+            $allStudents = json_decode($studentsRaw ?: '[]', true) ?: [];
+          }
+
+          $enrolledStudents = array_filter($allStudents, fn($s) => ($s['enrollment_status'] ?? '') === 'Enrolled');
+          $totalBalance = array_sum(array_column($allStudents, 'tuition_balance'));
+          $avgAttendance = count($allStudents) > 0 ? array_sum(array_column($allStudents, 'attendance_rate')) / count($allStudents) : 0;
+
+          // Get attendance summary for today
+          $attendanceSummary = ['rate' => 0, 'total' => 0];
+          $attendanceFile = __DIR__ . '/api/data/attendance.json';
+          if (file_exists($attendanceFile)) {
+            $attendanceRaw = @file_get_contents($attendanceFile);
+            $attendanceRecords = json_decode($attendanceRaw ?: '[]', true) ?: [];
+            $todayRecords = array_filter($attendanceRecords, fn($r) => ($r['date'] ?? '') === date('Y-m-d'));
+            $totalToday = 0; $presentToday = 0;
+            foreach ($todayRecords as $record) {
+              foreach (($record['students'] ?? []) as $student) {
+                $totalToday++;
+                if (strtolower($student['status'] ?? '') === 'present') $presentToday++;
+              }
+            }
+            $attendanceSummary['rate'] = $totalToday > 0 ? round(($presentToday / $totalToday) * 100, 1) : 0;
+            $attendanceSummary['total'] = $totalToday;
+          }
+
+          // Get user notifications
+          $userNotifCount = count($userNotifications);
+          ?>
           <div class="stat-item">
             <div class="stat-icon">👨‍🎓</div>
             <div class="stat-content">
-              <h3>245</h3>
+              <h3><?= count($enrolledStudents) ?></h3>
               <p>Active Students</p>
             </div>
           </div>
           <div class="stat-item">
             <div class="stat-icon">💰</div>
             <div class="stat-content">
-              <h3>₱1.2M</h3>
-              <p>Tuition Collected</p>
+              <h3>₱<?= number_format($totalBalance, 0) ?></h3>
+              <p>Total Outstanding</p>
             </div>
           </div>
           <div class="stat-item">
             <div class="stat-icon">📅</div>
             <div class="stat-content">
-              <h3>92%</h3>
-              <p>Avg Attendance</p>
+              <h3><?= $attendanceSummary['rate'] ?>%</h3>
+              <p>Today's Attendance</p>
             </div>
           </div>
           <div class="stat-item">
             <div class="stat-icon">📢</div>
             <div class="stat-content">
-              <h3>15</h3>
-              <p>Pending Notifications</p>
+              <h3><?= $userNotifCount ?></h3>
+              <p>My Notifications</p>
             </div>
           </div>
         <?php elseif ($userRole === 'Faculty'): ?>
+          <?php
+          // Get live data for faculty dashboard
+          $facultyClasses = [];
+          $facultyStudents = [];
+          $pendingGrades = 0;
+          $facultyEvaluations = [];
+
+          // Get classes and students assigned to this faculty member
+          // For now, we'll assume faculty teaches 2-4 classes based on their role
+          // In a real system, this would be based on actual class assignments
+          $facultyClasses = ['Mathematics', 'Science', 'English']; // Default subjects
+
+          // Get students in the faculty's classes
+          $studentsFile = __DIR__ . '/api/data/students.json';
+          if (file_exists($studentsFile)) {
+            $studentsRaw = @file_get_contents($studentsFile);
+            $allStudents = json_decode($studentsRaw ?: '[]', true) ?: [];
+            // For now, assume faculty teaches students from grades 7-10
+            $facultyStudents = array_filter($allStudents, function($s) {
+              $grade = $s['grade_level'] ?? '';
+              return preg_match('/Grade (7|8|9|10)/', $grade);
+            });
+          }
+
+          // Get evaluation responses for this faculty's students
+          $evaluationFile = __DIR__ . '/api/data/evaluations.json';
+          if (file_exists($evaluationFile)) {
+            $evalRaw = @file_get_contents($evaluationFile);
+            $evaluations = json_decode($evalRaw ?: '[]', true) ?: [];
+            $facultyEvaluations = array_filter($evaluations, function($e) use ($facultyStudents) {
+              return in_array(($e['student_id'] ?? ''), array_column($facultyStudents, 'student_id'));
+            });
+          }
+
+          // Calculate average rating from evaluations
+          $totalRating = 0;
+          $evalCount = count($facultyEvaluations);
+          if ($evalCount > 0) {
+            foreach ($facultyEvaluations as $eval) {
+              $totalRating += ($eval['rating'] ?? 0);
+            }
+            $avgRating = round($totalRating / $evalCount, 1);
+          } else {
+            $avgRating = 0;
+          }
+          ?>
           <div class="stat-item">
             <div class="stat-icon">📚</div>
             <div class="stat-content">
-              <h3>3</h3>
+              <h3><?= count($facultyClasses) ?></h3>
               <p>Active Classes</p>
             </div>
           </div>
           <div class="stat-item">
             <div class="stat-icon">👥</div>
             <div class="stat-content">
-              <h3>63</h3>
+              <h3><?= count($facultyStudents) ?></h3>
               <p>Total Students</p>
             </div>
           </div>
           <div class="stat-item">
             <div class="stat-icon">📝</div>
             <div class="stat-content">
-              <h3>12</h3>
+              <h3><?= $pendingGrades ?></h3>
               <p>Pending Grades</p>
             </div>
           </div>
           <div class="stat-item">
             <div class="stat-icon">⭐</div>
             <div class="stat-content">
-              <h3>4.8</h3>
+              <h3><?= $avgRating ?></h3>
               <p>Avg Rating</p>
             </div>
           </div>
         <?php elseif ($userRole === 'Student'): ?>
+          <?php
+          // Get live data for student dashboard
+          $studentData = [];
+          $enrolledCourses = [];
+          $studentAttendance = ['rate' => 0, 'balance' => 0];
+          $currentGPA = 0;
+
+          $studentsFile = __DIR__ . '/api/data/students.json';
+          if (file_exists($studentsFile)) {
+            $studentsRaw = @file_get_contents($studentsFile);
+            $allStudents = json_decode($studentsRaw ?: '[]', true) ?: [];
+            $studentMatches = array_filter($allStudents, function($s) use ($user) {
+              return strtolower($s['email'] ?? '') === strtolower($user['email']);
+            });
+            $studentData = reset($studentMatches) ?: [];
+
+            if ($studentData) {
+              // For enrolled courses, count based on grade level and assume multiple subjects per grade
+              $gradeLevel = $studentData['grade_level'] ?? '';
+              if ($gradeLevel) {
+                // Assume 6-8 subjects per grade level depending on the level
+                $baseCourses = 6; // Basic subjects
+                if (preg_match('/Grade (\d+)/', $gradeLevel, $matches)) {
+                  $gradeNum = (int)$matches[1];
+                  if ($gradeNum >= 7) $baseCourses = 8; // Higher grades have more subjects
+                }
+                $enrolledCourses = range(1, $baseCourses);
+              }
+
+              $studentAttendance = [
+                'rate' => $studentData['attendance_rate'] ?? 0,
+                'balance' => $studentData['tuition_balance'] ?? 0
+              ];
+              $currentGPA = $studentData['gpa'] ?? 0;
+            }
+          }
+          ?>
           <div class="stat-item">
             <div class="stat-icon">📖</div>
             <div class="stat-content">
-              <h3>6</h3>
+              <h3><?= count($enrolledCourses) ?></h3>
               <p>Enrolled Courses</p>
             </div>
           </div>
           <div class="stat-item">
             <div class="stat-icon">📊</div>
             <div class="stat-content">
-              <h3>3.2</h3>
+              <h3><?= number_format($currentGPA, 1) ?></h3>
               <p>Current GPA</p>
             </div>
           </div>
           <div class="stat-item">
             <div class="stat-icon">📅</div>
             <div class="stat-content">
-              <h3>85%</h3>
+              <h3><?= $studentAttendance['rate'] ?>%</h3>
               <p>Attendance</p>
             </div>
           </div>
           <div class="stat-item">
             <div class="stat-icon">💰</div>
             <div class="stat-content">
-              <h3>₱2,500</h3>
+              <h3>₱<?= number_format($studentAttendance['balance'], 0) ?></h3>
               <p>Tuition Balance</p>
             </div>
           </div>
@@ -362,20 +506,58 @@ $recentActivities = array_slice(array_filter($dsManager->getActivityStack()->get
           </div>
         <?php else: ?>
           <?php foreach ($recentActivities as $activity): ?>
-            <div class="activity-item">
-              <span class="activity-icon">🔍</span>
-              <div class="activity-content">
-                <p><strong><?= htmlspecialchars($activity['action']) ?></strong></p>
-                <?php if ($activity['details']): ?>
-                  <p class="text-muted"><?= htmlspecialchars($activity['details']) ?></p>
-                <?php endif; ?>
-                <small class="text-muted"><?= date('M j, g:i A', $activity['timestamp']) ?></small>
-              </div>
+          <div class="activity-item">
+            <span class="activity-icon">
+              <?php
+              $actionIcons = [
+                'login' => '🔑',
+                'logout' => '🚪',
+                'profile_view' => '👤',
+                'profile_update' => '✏️',
+                'security_check' => '🔒',
+                'dashboard_access' => '📊',
+                'notification_sent' => '📢',
+                'data_export' => '📤',
+                'settings_updated' => '⚙️',
+                'student_added' => '👨‍🎓',
+                'student_updated' => '✏️',
+                'grade_recorded' => '📝',
+                'attendance_marked' => '📅',
+                'payment_processed' => '💰',
+                'document_requested' => '📄',
+                'evaluation_submitted' => '⭐',
+                'assignment_submitted' => '📋',
+                'class_created' => '🏫',
+                'section_assigned' => '📋',
+                'report_generated' => '📊'
+              ];
+              $icon = $actionIcons[$activity['action']] ?? '🔍';
+              echo $icon;
+              ?>
+            </span>
+            <div class="activity-content">
+              <p><strong><?= htmlspecialchars(get_activity_display_name($activity['action'])) ?></strong></p>
+              <?php if ($activity['details']): ?>
+                <p class="text-muted"><?= htmlspecialchars($activity['details']) ?></p>
+              <?php endif; ?>
+              <small class="text-muted">
+                <?php
+                $timeAgo = time() - $activity['timestamp'];
+                if ($timeAgo < 60) {
+                  echo 'Just now';
+                } elseif ($timeAgo < 3600) {
+                  echo floor($timeAgo / 60) . ' minutes ago';
+                } elseif ($timeAgo < 86400) {
+                  echo floor($timeAgo / 3600) . ' hours ago';
+                } else {
+                  echo floor($timeAgo / 86400) . ' days ago';
+                }
+                ?>
+              </small>
             </div>
+          </div>
           <?php endforeach; ?>
         <?php endif; ?>
-      </div>
-    </section>
       </div>
     </section>
 
@@ -434,56 +616,8 @@ $recentActivities = array_slice(array_filter($dsManager->getActivityStack()->get
   </div>
 
   <script>
-    // Search functionality
-    function performSearch() {
-      const query = document.getElementById('globalSearch').value.trim();
-      const filter = document.getElementById('searchFilter').value;
-      
-      if (!query) {
-        alert('Please enter a search term');
-        return;
-      }
-      
-      // Call backend search API and display results
-      const url = `api/sample_data.php?action=search&q=${encodeURIComponent(query)}&filter=${encodeURIComponent(filter)}`;
-      fetch(url, { headers: { 'Accept': 'application/json' } })
-        .then(r => r.json())
-        .then(data => {
-          if (data.error) {
-            alert('Search error: ' + data.error);
-            return;
-          }
-          const res = data.results || {};
-          const notifCount = (res.notifications || []).length;
-          const activityCount = (res.activities || []).length;
-          const userCount = (res.users || []).length;
-          const courseCount = (res.courses || []).length;
-          const total = data.total || 0;
-          
-          let resultMessage = `Search Results for "${query}" (${total} total):\n\n`;
-          if (notifCount > 0) resultMessage += `📢 Notifications: ${notifCount}\n`;
-          if (activityCount > 0) resultMessage += `📊 Activities: ${activityCount}\n`;
-          if (userCount > 0) resultMessage += `👥 Users: ${userCount}\n`;
-          if (courseCount > 0) resultMessage += `📚 Courses: ${courseCount}\n`;
-          
-          if (total === 0) {
-            resultMessage += '\nNo results found. Try different keywords or check your spelling.';
-          } else {
-            resultMessage += '\nClick "View All Notifications" to see detailed results.';
-          }
-          
-          alert(resultMessage);
-          console.log('Search results:', data);
-        })
-        .catch(err => alert('Search failed: ' + err));
-    }
-    
-    // Allow Enter key to trigger search
-    document.getElementById('globalSearch').addEventListener('keypress', function(e) {
-      if (e.key === 'Enter') {
-        performSearch();
-      }
-    });
+    // Minimal fallback if global-search.js not loaded
+    function performSearch(){ /* handled by global-search.js live results */ }
     
     // Dark mode functionality
     function toggleDarkMode() {
@@ -560,5 +694,6 @@ $recentActivities = array_slice(array_filter($dsManager->getActivityStack()->get
       location.reload();
     }
   </script>
+  <script src="assets/js/global-search.js"></script>
 </body>
 </html>

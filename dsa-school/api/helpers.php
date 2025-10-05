@@ -1,6 +1,11 @@
 <?php
 declare(strict_types=1);
 
+// Timezone and school configuration
+date_default_timezone_set('Asia/Manila');
+define('SCHOOL_LEVELS', ['Kinder','Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6','Grade 7','Grade 8','Grade 9','Grade 10']);
+define('SCHOOL_QUARTERS', ['Q1','Q2','Q3','Q4','Summer']);
+
 // Where users.json lives (you moved data/ inside api/)
 define('USERS_FILE', __DIR__ . '/data/users.json');
 

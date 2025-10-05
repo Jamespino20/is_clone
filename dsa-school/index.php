@@ -42,8 +42,8 @@
             </div>
           <?php endif; ?>
           <form id="loginForm" class="shadow rounded p-4 bg-light">
-            <button type="button" class="btn-google w-100 mb-3 d-flex align-items-center justify-content-center" id="googleSignIn">
-              <img src="assets/img/google.svg" class="me-2" style="height: 1.2em;" alt="Google"> Continue with Google
+            <button type="button" class="btn-google w-100 mb-3 d-flex align-items-center justify-content-center" id="googleSignIn" title="Google Sign-In is currently unavailable" style="opacity: 0.6; cursor: not-allowed;">
+              <img src="assets/img/google.svg" class="me-2" style="height: 1.2em;" alt="Google"> Continue with Google <small class="ms-2 text-muted">(Unavailable)</small>
             </button>
             <div class="text-center my-2 small text-muted">or continue with username/email</div>
             <div class="mb-2">
@@ -108,8 +108,8 @@
         <h5 class="modal-title">Create your account</h5>
       </div>
       <div class="modal-body" id="registerModalBody">
-        <button class="btn-google w-100 mb-2" id="registerWithGoogle">
-          <img src="assets/img/google.svg" class="me-2" style="height:1.1em;"> Sign up with Google
+        <button class="btn-google w-100 mb-2" id="registerWithGoogle" title="Google Sign-In is currently unavailable" style="opacity: 0.6; cursor: not-allowed;">
+          <img src="assets/img/google.svg" class="me-2" style="height:1.1em;"> Sign up with Google <small class="ms-2 text-muted">(Unavailable)</small>
         </button>
         <hr class="mb-2 mt-2"/>
 <form id="registerForm" autocomplete="off">

@@ -42,7 +42,9 @@ if (!verify_password($pw, $user['password'])) {
     exit;
 }
 
-if (!empty($user['totp_secret'])) {
+// Require 2FA only if secret exists and it's enabled (default true if flag missing)
+$twofaEnabled = $user['twofa_enabled'] ?? true;
+if (!empty($user['totp_secret']) && $twofaEnabled) {
     $temp = gen_token(12);
     $_SESSION['temp_user_email'] = $email;
     $_SESSION['temp_token']      = $temp;

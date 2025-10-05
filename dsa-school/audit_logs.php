@@ -109,35 +109,7 @@ $paginatedLogs = array_slice($filteredLogs, $offset, $perPage);
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
-    <header class="topbar">
-        <div class="topbar-left">
-            <img src="assets/img/school-logo.png" alt="School Logo" class="topbar-logo">
-            <div class="topbar-title">
-                <h1>St. Luke's School of San Rafael</h1>
-                <span class="topbar-subtitle">Audit Logs</span>
-            </div>
-        </div>
-        <div class="topbar-right">
-            <div class="user-info">
-                <span class="user-name">Welcome, <?= htmlspecialchars($user['name']) ?></span>
-                <span class="user-role"><?= $userRole ?></span>
-            </div>
-            <nav>
-                <a href="profile.php" class="nav-link">Profile</a>
-                <a href="security.php" class="nav-link">Security</a>
-                <a href="notifications.php" class="nav-link">
-                  🔔 Notifications
-                  <?php if (count($unreadNotifications) > 0): ?>
-                    <span class="badge bg-warning"><?= count($unreadNotifications) ?></span>
-                  <?php endif; ?>
-                </a>
-                <?php if ($userRole === 'Administrator'): ?>
-                  <a href="audit_logs.php" class="nav-link">📋 Audit Logs</a>
-                <?php endif; ?>
-                <a href="api/logout.php" class="nav-link logout">Logout</a>
-            </nav>
-        </div>
-    </header>
+    <?php $subtitle = 'Audit Logs'; $assetPrefix = ''; include __DIR__ . '/partials/header.php'; ?>
 
     <main class="container">
         <!-- Filters and Export -->

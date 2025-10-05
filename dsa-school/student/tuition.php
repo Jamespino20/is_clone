@@ -41,27 +41,14 @@ $tuitionData = [
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
-    <header class="topbar">
-        <div class="topbar-left">
-            <img src="../assets/img/school-logo.png" alt="School Logo" class="topbar-logo">
-            <div class="topbar-title">
-                <h1>St. Luke's School of San Rafael</h1>
-                <span class="topbar-subtitle">Tuition Balance</span>
-            </div>
-        </div>
-        <div class="topbar-right">
-            <div class="user-info">
-                <span class="user-name">Welcome, <?= htmlspecialchars($user['name']) ?></span>
-                <span class="user-role"><?= get_role_display_name($user['role']) ?></span>
-            </div>
-            <nav>
-                <a href="../profile.php" class="nav-link">Profile</a>
-                <a href="../security.php" class="nav-link">Security</a>
-                <a href="../notifications.php" class="nav-link">🔔 Notifications</a>
-                <a href="../api/logout.php" class="nav-link logout">Logout</a>
-            </nav>
-        </div>
-    </header>
+    <?php
+        require_once __DIR__ . '/../api/data_structures.php';
+        $dsManager = DataStructuresManager::getInstance();
+        $userRole = get_role_display_name($user['role']);
+        $userNotifications = array_filter($dsManager->getNotificationQueue()->getAll(), fn($n) => $n['user_email'] === $email);
+        $unreadNotifications = array_filter($userNotifications, fn($n) => !$n['read']);
+        $subtitle = 'Tuition Balance'; $assetPrefix = '..'; include __DIR__ . '/../partials/header.php';
+    ?>
 
     <main class="container">
         <!-- Tuition Summary -->

@@ -2,7 +2,7 @@
     {
         "name": "James Bryant Admin",
         "email": "espino.jamesbryant20+admin@gmail.com",
-        "password": "$2y$10$AGhC6He4O8F5X5F5DxFXIewN94jb3.q2.OTH4p.pmThMyo4P35WiS",
+        "password": "$2y$10$UKP2MPZBeToSTjA554f2gOxtaVBL9WKeLNM7lTT/5KXZ1SApKCbpq",
         "role": "Administrator",
         "created": 1759574258,
         "totp_secret": "4S7WC6EX7SKT5Z2C",
@@ -33,6 +33,15 @@
         "role": "Student",
         "created": 1759574457,
         "totp_secret": "LWQUG4B2NRC3JKVY",
+        "sessions": []
+    },
+    {
+        "name": "Jane Doe",
+        "email": "espino.jamesbryant20+student2@gmail.com",
+        "password": "$2y$10$RyGghB.4xFgL4O/ZBLKSn.wrDz1Ni2CIyUITWqyfSN4G7RwSP/ete",
+        "role": "Student",
+        "created": 1759644678,
+        "totp_secret": "GBPHHMPDWHFTQZZZ",
         "sessions": []
     }
 ]

@@ -99,25 +99,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'mark_
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
-    <header class="topbar">
-        <div class="topbar-left">
-            <img src="../assets/img/school-logo.png" alt="School Logo" class="topbar-logo">
-            <div class="topbar-title">
-                <h1>My Attendance</h1>
-                <span class="topbar-subtitle">Student Portal</span>
-            </div>
-        </div>
-        <div class="topbar-right">
-            <div class="user-info">
-                <span class="user-name"><?= htmlspecialchars($user['name']) ?></span>
-                <span class="user-role"><?= get_role_display_name($user['role']) ?></span>
-            </div>
-            <nav>
-                <a href="../dashboard.php" class="nav-link">← Dashboard</a>
-                <a href="../api/logout.php" class="nav-link logout">Logout</a>
-            </nav>
-        </div>
-    </header>
+    <?php
+        require_once __DIR__ . '/../api/data_structures.php';
+        $dsManager = DataStructuresManager::getInstance();
+        $userRole = get_role_display_name($user['role']);
+        $userNotifications = array_filter($dsManager->getNotificationQueue()->getAll(), fn($n) => $n['user_email'] === $email);
+        $unreadNotifications = array_filter($userNotifications, fn($n) => !$n['read']);
+        $subtitle = 'My Attendance'; $assetPrefix = '..'; include __DIR__ . '/../partials/header.php';
+    ?>
 
     <main class="container">
         <!-- Attendance Summary -->

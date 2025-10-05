@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 session_start();
 require_once __DIR__ . '/../api/helpers.php';
+require_once __DIR__ . '/../api/data_structures.php';
 
 $email = $_SESSION['user_email'] ?? null;
 if (!$email) {
@@ -17,6 +18,15 @@ if (!$user || $user['role'] !== 'Administrator') {
 }
 
 $users = read_users();
+
+// For shared header: compute role display and unread notifications
+$userRole = get_role_display_name($user['role']);
+$dsManager = DataStructuresManager::getInstance();
+$allNotifications = $dsManager->getNotificationQueue()->getAll();
+$userNotifications = array_filter($allNotifications, function($n) use ($email, $user) {
+    return $n['user_email'] === $email || (isset($n['is_system']) && $n['is_system'] && (empty($n['target_roles']) || in_array($user['role'], $n['target_roles'])));
+});
+$unreadNotifications = array_filter($userNotifications, fn($n) => !$n['read']);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -28,28 +38,7 @@ $users = read_users();
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
-    <header class="topbar">
-        <div class="topbar-left">
-            <img src="../assets/img/school-logo.png" alt="School Logo" class="topbar-logo">
-            <div class="topbar-title">
-                <h1>St. Luke's School of San Rafael</h1>
-                <span class="topbar-subtitle">User Management</span>
-            </div>
-        </div>
-        <div class="topbar-right">
-            <div class="user-info">
-                <span class="user-name">Welcome, <?= htmlspecialchars($user['name']) ?></span>
-                <span class="user-role"><?= get_role_display_name($user['role']) ?></span>
-            </div>
-            <nav>
-                <a href="../profile.php" class="nav-link">Profile</a>
-                <a href="../security.php" class="nav-link">Security</a>
-                <a href="../notifications.php" class="nav-link">🔔 Notifications</a>
-                <a href="../audit_logs.php" class="nav-link">📋 Audit Logs</a>
-                <a href="../api/logout.php" class="nav-link logout">Logout</a>
-            </nav>
-        </div>
-    </header>
+    <?php $subtitle = 'User Management'; $assetPrefix = '..'; include __DIR__ . '/../partials/header.php'; ?>
 
     <main class="container">
         <section class="card">
@@ -194,7 +183,9 @@ $users = read_users();
             document.getElementById('userRole').value = user.role;
             document.getElementById('userPassword').value = '';
             document.getElementById('userPassword').required = false;
-            document.getElementById('user2FA').checked = !!(user.totp_secret);
+            // reflect enabled flag (defaults true if secret exists and flag missing)
+            const enabled = (user.twofa_enabled === undefined ? !!user.totp_secret : !!user.twofa_enabled);
+            document.getElementById('user2FA').checked = enabled;
             document.getElementById('userModal').style.display = 'flex';
         }
         
@@ -202,18 +193,38 @@ $users = read_users();
             document.getElementById('userModal').style.display = 'none';
         }
         
-        function deleteUser(index) {
-            if (confirm('Are you sure you want to delete this user?')) {
-                // In a real application, you'd make an AJAX call here
-                alert('Delete functionality would be implemented here');
-            }
+        async function deleteUser(index) {
+            const user = users[index];
+            if (!user) return;
+            if (user.email === <?= json_encode($email) ?>) { alert('You cannot delete your own account.'); return; }
+            if (!confirm('Are you sure you want to delete this user?')) return;
+            const res = await fetch('../api/users_delete.php', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body: new URLSearchParams({ email: user.email }) });
+            const data = await res.json();
+            if (!data.ok) { alert(data.error || 'Delete failed'); return; }
+            location.reload();
         }
         
-        document.getElementById('userForm').addEventListener('submit', function(e) {
+        document.getElementById('userForm').addEventListener('submit', async function(e) {
             e.preventDefault();
-            // In a real application, you'd make an AJAX call here
-            alert('Save functionality would be implemented here');
-            closeUserModal();
+            const index = document.getElementById('userIndex').value;
+            const payload = new URLSearchParams({
+              name: document.getElementById('userName').value.trim(),
+              email: document.getElementById('userEmail').value.trim(),
+              role: document.getElementById('userRole').value,
+              password: document.getElementById('userPassword').value,
+              enable_2fa: document.getElementById('user2FA').checked ? '1' : '0'
+            });
+            try {
+              const isEdit = index !== '';
+              const endpoint = isEdit ? '../api/users_update.php' : '../api/users_create.php';
+              const res = await fetch(endpoint, { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body: payload });
+              const data = await res.json();
+              if (!data.ok) { alert(data.error || 'Save failed'); return; }
+              closeUserModal();
+              location.reload();
+            } catch (err) {
+              alert('Network error');
+            }
         });
     </script>
 </body>

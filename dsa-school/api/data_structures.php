@@ -7,9 +7,16 @@ declare(strict_types=1);
 class ActivityStack {
     private array $items = [];
     private int $maxSize;
+    private ?string $persistFile;
     
-    public function __construct(int $maxSize = 100) {
+    public function __construct(int $maxSize = 100, ?string $persistFile = null) {
         $this->maxSize = $maxSize;
+        $this->persistFile = $persistFile;
+        if ($this->persistFile && file_exists($this->persistFile)) {
+            $raw = file_get_contents($this->persistFile);
+            $data = json_decode($raw, true);
+            if (is_array($data)) $this->items = $data;
+        }
     }
     
     public function push(array $activity): void {
@@ -17,6 +24,7 @@ class ActivityStack {
             array_shift($this->items); // Remove oldest if at capacity
         }
         $this->items[] = $activity;
+        $this->save();
     }
     
     public function pop(): ?array {
@@ -41,6 +49,12 @@ class ActivityStack {
     
     public function clear(): void {
         $this->items = [];
+        $this->save();
+    }
+
+    private function save(): void {
+        if (!$this->persistFile) return;
+        @file_put_contents($this->persistFile, json_encode($this->items, JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES));
     }
 }
 
@@ -48,9 +62,16 @@ class ActivityStack {
 class NotificationQueue {
     private array $items = [];
     private int $maxSize;
+    private ?string $persistFile;
     
-    public function __construct(int $maxSize = 200) {
+    public function __construct(int $maxSize = 200, ?string $persistFile = null) {
         $this->maxSize = $maxSize;
+        $this->persistFile = $persistFile;
+        if ($this->persistFile && file_exists($this->persistFile)) {
+            $raw = file_get_contents($this->persistFile);
+            $data = json_decode($raw, true);
+            if (is_array($data)) $this->items = $data;
+        }
     }
     
     public function enqueue(array $notification): void {
@@ -58,10 +79,13 @@ class NotificationQueue {
             array_shift($this->items); // Remove oldest if at capacity
         }
         $this->items[] = $notification;
+        $this->save();
     }
     
     public function dequeue(): ?array {
-        return array_shift($this->items);
+        $val = array_shift($this->items);
+        $this->save();
+        return $val;
     }
     
     public function front(): ?array {
@@ -82,6 +106,21 @@ class NotificationQueue {
     
     public function clear(): void {
         $this->items = [];
+        $this->save();
+    }
+
+    public function markReadByIndexForUser(int $index, string $userEmail): bool {
+        if (!isset($this->items[$index])) return false;
+        $n =& $this->items[$index];
+        if ($n['user_email'] !== $userEmail && empty($n['is_system'])) return false;
+        $n['read'] = true;
+        $this->save();
+        return true;
+    }
+
+    private function save(): void {
+        if (!$this->persistFile) return;
+        @file_put_contents($this->persistFile, json_encode($this->items, JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES));
     }
 }
 
@@ -159,13 +198,92 @@ class AssignmentQueue {
     }
 }
 
+// Queue for Student Document Requests (e.g., COG, Good Moral)
+class DocumentRequestQueue {
+    private array $items = [];
+    private int $maxSize;
+    private ?string $persistFile;
+
+    public function __construct(int $maxSize = 200, ?string $persistFile = null) {
+        $this->maxSize = $maxSize;
+        $this->persistFile = $persistFile;
+        if ($this->persistFile && file_exists($this->persistFile)) {
+            $raw = file_get_contents($this->persistFile);
+            $data = json_decode($raw, true);
+            if (is_array($data)) $this->items = $data;
+        }
+    }
+
+    public function enqueue(array $request): void {
+        if (count($this->items) >= $this->maxSize) array_shift($this->items);
+        $this->items[] = $request;
+        $this->save();
+    }
+
+    public function dequeue(): ?array {
+        $val = array_shift($this->items);
+        $this->save();
+        return $val;
+    }
+
+    public function getAll(): array { return $this->items; }
+    public function size(): int { return count($this->items); }
+    public function clear(): void { $this->items = []; $this->save(); }
+
+    private function save(): void {
+        if (!$this->persistFile) return;
+        @file_put_contents($this->persistFile, json_encode($this->items, JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES));
+    }
+}
+
+// Stack for Teacher Evaluation Responses (most recent on top)
+class EvaluationResponseStack {
+    private array $items = [];
+    private int $maxSize;
+    private ?string $persistFile;
+
+    public function __construct(int $maxSize = 500, ?string $persistFile = null) {
+        $this->maxSize = $maxSize;
+        $this->persistFile = $persistFile;
+        if ($this->persistFile && file_exists($this->persistFile)) {
+            $raw = file_get_contents($this->persistFile);
+            $data = json_decode($raw, true);
+            if (is_array($data)) $this->items = $data;
+        }
+    }
+
+    public function push(array $response): void {
+        if (count($this->items) >= $this->maxSize) array_shift($this->items);
+        $this->items[] = $response;
+        $this->save();
+    }
+
+    public function pop(): ?array { $val = array_pop($this->items); $this->save(); return $val; }
+    public function peek(): ?array { return end($this->items) ?: null; }
+    public function getAll(): array { return array_reverse($this->items); }
+    public function size(): int { return count($this->items); }
+    public function clear(): void { $this->items = []; $this->save(); }
+
+    private function save(): void {
+        if (!$this->persistFile) return;
+        @file_put_contents($this->persistFile, json_encode($this->items, JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES));
+    }
+}
+
 // Stack Implementation for System Logs
 class SystemLogStack {
     private array $items = [];
     private int $maxSize;
+    private ?string $persistFile;
     
-    public function __construct(int $maxSize = 500) {
+    public function __construct(int $maxSize = 500, ?string $persistFile = null) {
         $this->maxSize = $maxSize;
+        $this->persistFile = $persistFile;
+        if ($this->persistFile && file_exists($this->persistFile)) {
+            $raw = file_get_contents($this->persistFile);
+            $data = json_decode($raw, true);
+            if (is_array($data)) $this->items = $data;
+        }
     }
     
     public function log(array $logEntry): void {
@@ -173,6 +291,7 @@ class SystemLogStack {
             array_shift($this->items);
         }
         $this->items[] = $logEntry;
+        $this->save();
     }
     
     public function getLatestLog(): ?array {
@@ -193,6 +312,11 @@ class SystemLogStack {
     
     public function size(): int {
         return count($this->items);
+    }
+
+    private function save(): void {
+        if (!$this->persistFile) return;
+        @file_put_contents($this->persistFile, json_encode($this->items, JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES));
     }
 }
 
@@ -242,14 +366,20 @@ class DataStructuresManager {
     private AssignmentQueue $assignmentQueue;
     private SystemLogStack $systemLogStack;
     private PaymentQueue $paymentQueue;
+    private DocumentRequestQueue $documentRequestQueue;
+    private EvaluationResponseStack $evaluationResponseStack;
     
     private function __construct() {
-        $this->activityStack = new ActivityStack();
-        $this->notificationQueue = new NotificationQueue();
+        $base = __DIR__ . '/data';
+        if (!is_dir($base)) @mkdir($base, 0775, true);
+        $this->activityStack = new ActivityStack(100, $base . '/activities.json');
+        $this->notificationQueue = new NotificationQueue(200, $base . '/notifications.json');
         $this->gradeStack = new GradeHistoryStack();
         $this->assignmentQueue = new AssignmentQueue();
-        $this->systemLogStack = new SystemLogStack();
+        $this->systemLogStack = new SystemLogStack(500, $base . '/system_logs.json');
         $this->paymentQueue = new PaymentQueue();
+        $this->documentRequestQueue = new DocumentRequestQueue(200, $base . '/document_requests.json');
+        $this->evaluationResponseStack = new EvaluationResponseStack(500, $base . '/evaluation_responses.json');
     }
     
     public static function getInstance(): self {
@@ -281,6 +411,14 @@ class DataStructuresManager {
     
     public function getPaymentQueue(): PaymentQueue {
         return $this->paymentQueue;
+    }
+
+    public function getDocumentRequestQueue(): DocumentRequestQueue {
+        return $this->documentRequestQueue;
+    }
+
+    public function getEvaluationResponseStack(): EvaluationResponseStack {
+        return $this->evaluationResponseStack;
     }
     
     // Helper methods for common operations
@@ -321,6 +459,10 @@ class DataStructuresManager {
         ];
         $this->notificationQueue->enqueue($notification);
     }
+
+    public function markNotificationRead(int $index, string $userEmail): bool {
+        return $this->notificationQueue->markReadByIndexForUser($index, $userEmail);
+    }
     
     public function recordGrade(string $studentEmail, string $subject, float $grade, string $semester): void {
         $gradeRecord = [
@@ -343,6 +485,30 @@ class DataStructuresManager {
             'status' => 'submitted'
         ];
         $this->assignmentQueue->submitAssignment($assignment);
+    }
+
+    public function requestDocument(string $studentEmail, string $type, string $notes = ''): void {
+        $req = [
+            'student_email' => $studentEmail,
+            'type' => $type,
+            'notes' => $notes,
+            'status' => 'pending',
+            'requested_at' => time()
+        ];
+        $this->documentRequestQueue->enqueue($req);
+        $this->addNotification('system', 'New Document Request', "$studentEmail requested $type", 'info');
+    }
+
+    public function addEvaluationResponse(string $studentEmail, string $teacherEmail, array $scores, string $comments = ''): void {
+        $resp = [
+            'student_email' => $studentEmail,
+            'teacher_email' => $teacherEmail,
+            'scores' => $scores,
+            'comments' => $comments,
+            'submitted_at' => time()
+        ];
+        $this->evaluationResponseStack->push($resp);
+        $this->logActivity($studentEmail, 'submit_evaluation', "teacher=$teacherEmail");
     }
     
     public function addPayment(string $studentEmail, float $amount, string $method): void {

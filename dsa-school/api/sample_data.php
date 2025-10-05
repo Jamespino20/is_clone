@@ -68,7 +68,95 @@ switch ($action) {
         echo json_encode(['success' => true, 'message' => 'Sample data added successfully']);
         break;
         
-    case 'get_notifications':
+    case 'index':
+        // Build search index for global search
+        $index = [];
+
+        // Add navigation items
+        $index['navigation'] = [
+            ['label' => 'Dashboard', 'href' => 'dashboard.php', 'category' => 'Main'],
+            ['label' => 'Profile', 'href' => 'profile.php', 'category' => 'Account'],
+            ['label' => 'Security', 'href' => 'security.php', 'category' => 'Account'],
+            ['label' => 'Notifications', 'href' => 'notifications.php', 'category' => 'Communication'],
+        ];
+
+        // Add admin items if user is admin
+        if ($user['role'] === 'Administrator') {
+            $index['admin'] = [
+                ['label' => 'User Management', 'href' => 'admin/users.php', 'category' => 'Administration'],
+                ['label' => 'System Settings', 'href' => 'admin/settings.php', 'category' => 'Administration'],
+                ['label' => 'Reports', 'href' => 'admin/reports.php', 'category' => 'Administration'],
+                ['label' => 'Audit Logs', 'href' => 'admin/audit.php', 'category' => 'Administration'],
+                ['label' => 'System Backup', 'href' => 'admin/backup.php', 'category' => 'Administration'],
+                ['label' => 'Admin Notifications', 'href' => 'admin/notifications.php', 'category' => 'Communication'],
+            ];
+        }
+
+        // Add staff items if user is staff
+        if ($user['role'] === 'Staff') {
+            $index['staff'] = [
+                ['label' => 'Student Management', 'href' => 'staff/students.php', 'category' => 'Management'],
+                ['label' => 'Tuition Management', 'href' => 'staff/tuition.php', 'category' => 'Finance'],
+                ['label' => 'Attendance', 'href' => 'staff/attendance.php', 'category' => 'Academics'],
+                ['label' => 'Reports', 'href' => 'staff/reports.php', 'category' => 'Administration'],
+                ['label' => 'Send Notifications', 'href' => 'staff/notifications.php', 'category' => 'Communication'],
+            ];
+        }
+
+        // Add faculty items if user is faculty
+        if ($user['role'] === 'Faculty') {
+            $index['faculty'] = [
+                ['label' => 'My Classes', 'href' => 'faculty/classes.php', 'category' => 'Teaching'],
+                ['label' => 'Gradebook', 'href' => 'faculty/grades.php', 'category' => 'Teaching'],
+                ['label' => 'Assignments', 'href' => 'faculty/assignments.php', 'category' => 'Teaching'],
+                ['label' => 'Class Attendance', 'href' => 'faculty/attendance.php', 'category' => 'Teaching'],
+                ['label' => 'Evaluations', 'href' => 'faculty/evaluations.php', 'category' => 'Teaching'],
+                ['label' => 'Class Materials', 'href' => 'faculty/materials.php', 'category' => 'Teaching'],
+            ];
+        }
+
+        // Add student items if user is student
+        if ($user['role'] === 'Student') {
+            $index['student'] = [
+                ['label' => 'My Courses', 'href' => 'student/courses.php', 'category' => 'Academics'],
+                ['label' => 'My Grades', 'href' => 'student/grades.php', 'category' => 'Academics'],
+                ['label' => 'Attendance', 'href' => 'student/attendance.php', 'category' => 'Academics'],
+                ['label' => 'Tuition Balance', 'href' => 'student/tuition.php', 'category' => 'Finance'],
+                ['label' => 'Teacher Evaluations', 'href' => 'student/evaluations.php', 'category' => 'Feedback'],
+                ['label' => 'Documents', 'href' => 'student/documents.php', 'category' => 'Academics'],
+            ];
+        }
+
+        // Add sample courses for search
+        $index['courses'] = [
+            ['label' => 'Mathematics', 'href' => 'faculty/grades.php', 'category' => 'Subject'],
+            ['label' => 'Science', 'href' => 'faculty/grades.php', 'category' => 'Subject'],
+            ['label' => 'English', 'href' => 'faculty/grades.php', 'category' => 'Subject'],
+            ['label' => 'Filipino', 'href' => 'faculty/grades.php', 'category' => 'Subject'],
+            ['label' => 'Social Studies', 'href' => 'faculty/grades.php', 'category' => 'Subject'],
+            ['label' => 'Physical Education', 'href' => 'faculty/grades.php', 'category' => 'Subject'],
+        ];
+
+        // Add sample students for search (if staff or admin)
+        if (in_array($user['role'], ['Staff', 'Administrator'])) {
+            $studentsFile = __DIR__ . '/data/students.json';
+            if (file_exists($studentsFile)) {
+                $studentsRaw = @file_get_contents($studentsFile);
+                $students = json_decode($studentsRaw ?: '[]', true) ?: [];
+                $studentIndex = array_map(function($student) {
+                    return [
+                        'label' => $student['name'] . ' (' . $student['student_id'] . ')',
+                        'href' => 'staff/students.php',
+                        'category' => 'Student',
+                        'id' => $student['id']
+                    ];
+                }, array_slice($students, 0, 20)); // Limit to first 20 for performance
+                $index['students'] = $studentIndex;
+            }
+        }
+
+        echo json_encode(['index' => $index]);
+        break;
         $dsManager = DataStructuresManager::getInstance();
         $allNotifications = $dsManager->getNotificationQueue()->getAll();
         $userNotifications = array_filter($allNotifications, fn($n) => $n['user_email'] === $email);

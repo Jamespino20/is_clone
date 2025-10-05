@@ -15,6 +15,12 @@ if (!$user || $user['role'] !== 'Student') {
     header('Location: ../dashboard.php');
     exit;
 }
+
+$teachers = [
+    ['id' => 1, 'name' => 'Prof. Maria Santos', 'subject' => 'Mathematics', 'evaluated' => false],
+    ['id' => 2, 'name' => 'Prof. Juan Reyes', 'subject' => 'Science', 'evaluated' => false],
+    ['id' => 3, 'name' => 'Prof. Ana Garcia', 'subject' => 'English', 'evaluated' => true]
+];
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -26,137 +32,106 @@ if (!$user || $user['role'] !== 'Student') {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
-    <header class="topbar">
-        <div class="topbar-left">
-            <img src="../assets/img/school-logo.png" alt="School Logo" class="topbar-logo">
-            <div class="topbar-title">
-                <h1>St. Luke's School of San Rafael</h1>
-                <span class="topbar-subtitle">Teacher Evaluations</span>
-            </div>
-        </div>
-        <div class="topbar-right">
-            <div class="user-info">
-                <span class="user-name">Welcome, <?= htmlspecialchars($user['name']) ?></span>
-                <span class="user-role"><?= get_role_display_name($user['role']) ?></span>
-            </div>
-            <nav>
-                <a href="../profile.php" class="nav-link">Profile</a>
-                <a href="../security.php" class="nav-link">Security</a>
-                <a href="../notifications.php" class="nav-link">🔔 Notifications</a>
-                <a href="../api/logout.php" class="nav-link logout">Logout</a>
-            </nav>
-        </div>
-    </header>
+    <?php
+        require_once __DIR__ . '/../api/data_structures.php';
+        $dsManager = DataStructuresManager::getInstance();
+        $userRole = get_role_display_name($user['role']);
+        $userNotifications = array_filter($dsManager->getNotificationQueue()->getAll(), fn($n) => $n['user_email'] === $email);
+        $unreadNotifications = array_filter($userNotifications, fn($n) => !$n['read']);
+        $subtitle = 'Teacher Evaluations'; $assetPrefix = '..'; include __DIR__ . '/../partials/header.php';
+    ?>
 
     <main class="container">
-        <!-- 404 Error Page -->
-        <section class="card text-center py-5">
-            <div class="error-404">
-                <div class="error-icon">⭐</div>
-                <h1 class="display-1 fw-bold text-primary">404</h1>
-                <h2 class="h3 mb-4">Teacher Evaluations Coming Soon</h2>
-                <p class="lead text-muted mb-4">
-                    The teacher evaluation system is currently under development. 
-                    This feature will be available soon to help improve our educational experience.
-                </p>
-                
-                <div class="row justify-content-center mb-4">
-                    <div class="col-md-8">
-                        <div class="alert alert-info">
-                            <h5 class="alert-heading">🚧 Under Construction</h5>
-                            <p class="mb-0">
-                                We're working hard to bring you a comprehensive teacher evaluation system 
-                                that will allow you to provide valuable feedback to help improve our teaching quality.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="feature-preview mb-4">
-                    <h4 class="mb-3">What to Expect:</h4>
-                    <div class="row">
-                        <div class="col-md-4 mb-3">
-                            <div class="feature-card">
-                                <div class="feature-icon">📝</div>
-                                <h5>Anonymous Feedback</h5>
-                                <p class="text-muted">Provide honest feedback while maintaining privacy</p>
-                            </div>
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <div class="feature-card">
-                                <div class="feature-icon">📊</div>
-                                <h5>Rating System</h5>
-                                <p class="text-muted">Rate teaching effectiveness across multiple criteria</p>
-                            </div>
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <div class="feature-card">
-                                <div class="feature-icon">💬</div>
-                                <h5>Written Comments</h5>
-                                <p class="text-muted">Share detailed suggestions and observations</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="action-buttons">
-                    <a href="../dashboard.php" class="btn btn-primary btn-lg me-3">
-                        ← Back to Dashboard
-                    </a>
-                    <a href="../student/courses.php" class="btn btn-outline-primary btn-lg">
-                        View My Courses
-                    </a>
-                </div>
+        <section class="card">
+            <h2>Evaluate Your Teachers</h2>
+            <p>Your feedback helps us improve teaching quality. All evaluations are anonymous and confidential.</p>
+            
+            <div class="alert alert-info">
+                <strong>📝 Evaluation Period:</strong> Now open through <?= date('F j, Y', strtotime('+14 days')) ?>
             </div>
         </section>
 
-        <!-- Timeline -->
         <section class="card">
-            <h3 class="text-center mb-4">Development Timeline</h3>
-            <div class="timeline">
-                <div class="timeline-item">
-                    <div class="timeline-marker bg-primary"></div>
-                    <div class="timeline-content">
-                        <h5>Phase 1: Design & Planning</h5>
-                        <p class="text-muted">Creating user-friendly evaluation forms and rating systems</p>
-                        <small class="text-success">✅ Completed</small>
+            <h3>Your Teachers</h3>
+            <div class="row">
+                <?php foreach ($teachers as $teacher): ?>
+                <div class="col-md-6 mb-3">
+                    <div class="action-card">
+                        <h5><?= htmlspecialchars($teacher['name']) ?></h5>
+                        <p class="text-muted"><?= htmlspecialchars($teacher['subject']) ?></p>
+                        <?php if ($teacher['evaluated']): ?>
+                            <span class="badge bg-success">✅ Evaluated</span>
+                            <button class="btn btn-sm btn-outline-primary mt-2" onclick="viewEvaluation(<?= $teacher['id'] ?>)">View Submission</button>
+                        <?php else: ?>
+                            <span class="badge bg-warning">⏳ Pending</span>
+                            <button class="btn btn-sm btn-primary mt-2" onclick="evaluateTeacher(<?= $teacher['id'] ?>, '<?= htmlspecialchars($teacher['name']) ?>', '<?= htmlspecialchars($teacher['subject']) ?>')">Evaluate Now</button>
+                        <?php endif; ?>
                     </div>
                 </div>
-                <div class="timeline-item">
-                    <div class="timeline-marker bg-warning"></div>
-                    <div class="timeline-content">
-                        <h5>Phase 2: Development</h5>
-                        <p class="text-muted">Building the evaluation platform and database integration</p>
-                        <small class="text-warning">🔄 In Progress</small>
+                <?php endforeach; ?>
+            </div>
+        </section>
+
+        <section class="card">
+            <h3>Evaluation Progress</h3>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-icon">📊</div>
+                    <div class="stat-content">
+                        <h3><?= count($teachers) ?></h3>
+                        <p>Total Teachers</p>
                     </div>
                 </div>
-                <div class="timeline-item">
-                    <div class="timeline-marker bg-secondary"></div>
-                    <div class="timeline-content">
-                        <h5>Phase 3: Testing</h5>
-                        <p class="text-muted">Quality assurance and user acceptance testing</p>
-                        <small class="text-muted">⏳ Pending</small>
+                <div class="stat-item">
+                    <div class="stat-icon">✅</div>
+                    <div class="stat-content">
+                        <h3><?= count(array_filter($teachers, fn($t) => $t['evaluated'])) ?></h3>
+                        <p>Completed</p>
                     </div>
                 </div>
-                <div class="timeline-item">
-                    <div class="timeline-marker bg-success"></div>
-                    <div class="timeline-content">
-                        <h5>Phase 4: Launch</h5>
-                        <p class="text-muted">Official release and student training</p>
-                        <small class="text-muted">⏳ Pending</small>
+                <div class="stat-item">
+                    <div class="stat-icon">⏳</div>
+                    <div class="stat-content">
+                        <h3><?= count(array_filter($teachers, fn($t) => !$t['evaluated'])) ?></h3>
+                        <p>Pending</p>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-icon">📈</div>
+                    <div class="stat-content">
+                        <h3><?= round((count(array_filter($teachers, fn($t) => $t['evaluated'])) / count($teachers)) * 100) ?>%</h3>
+                        <p>Progress</p>
                     </div>
                 </div>
             </div>
         </section>
     </main>
 
-    <!-- Dark Mode Toggle -->
+    <div id="evaluationModal" class="modal fade" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitle">Teacher Evaluation</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="modalBody">
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="dark-mode-toggle" onclick="toggleDarkMode()">
         <span id="darkModeIcon">🌙</span>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Dark mode functionality
+        let evaluationModal;
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            evaluationModal = new bootstrap.Modal(document.getElementById('evaluationModal'));
+        });
+
         function toggleDarkMode() {
             const body = document.body;
             const icon = document.getElementById('darkModeIcon');
@@ -172,7 +147,6 @@ if (!$user || $user['role'] !== 'Student') {
             }
         }
         
-        // Load dark mode preference
         document.addEventListener('DOMContentLoaded', function() {
             const darkMode = localStorage.getItem('darkMode');
             if (darkMode === 'true') {
@@ -180,107 +154,163 @@ if (!$user || $user['role'] !== 'Student') {
                 document.getElementById('darkModeIcon').textContent = '☀️';
             }
         });
+
+        function evaluateTeacher(id, name, subject) {
+            document.getElementById('modalTitle').textContent = `Evaluate ${name}`;
+            document.getElementById('modalBody').innerHTML = `
+                <p class="mb-4"><strong>Subject:</strong> ${subject}</p>
+                <form id="evaluationForm">
+                    <input type="hidden" name="teacher_id" value="${id}">
+                    
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">1. Teaching Effectiveness</label>
+                        <p class="text-muted small">How effectively does the teacher explain concepts?</p>
+                        <div class="rating-group">
+                            ${createRatingButtons('teaching_effectiveness')}
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">2. Course Organization</label>
+                        <p class="text-muted small">How well organized are the lessons and materials?</p>
+                        <div class="rating-group">
+                            ${createRatingButtons('course_organization')}
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">3. Student Engagement</label>
+                        <p class="text-muted small">How well does the teacher engage and motivate students?</p>
+                        <div class="rating-group">
+                            ${createRatingButtons('student_engagement')}
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">4. Communication Skills</label>
+                        <p class="text-muted small">How clear and accessible is the teacher's communication?</p>
+                        <div class="rating-group">
+                            ${createRatingButtons('communication')}
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">5. Availability and Support</label>
+                        <p class="text-muted small">How available and supportive is the teacher outside of class?</p>
+                        <div class="rating-group">
+                            ${createRatingButtons('availability')}
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Additional Comments (Optional)</label>
+                        <textarea class="form-control" name="comments" rows="4" placeholder="Share any additional feedback or suggestions..."></textarea>
+                    </div>
+
+                    <div class="alert alert-warning">
+                        <strong>Note:</strong> Your evaluation is anonymous and will be used solely to improve teaching quality.
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100">Submit Evaluation</button>
+                </form>
+            `;
+            evaluationModal.show();
+
+            document.getElementById('evaluationForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const ratings = ['teaching_effectiveness', 'course_organization', 'student_engagement', 'communication', 'availability'];
+                const allRated = ratings.every(r => document.querySelector(`input[name="${r}"]:checked`));
+                
+                if (!allRated) {
+                    alert('Please rate all criteria before submitting.');
+                    return;
+                }
+
+                if (!confirm('Submit your evaluation? You will not be able to change it after submission.')) return;
+                const scores = {
+                    teaching_effectiveness: Number(document.querySelector('input[name="teaching_effectiveness"]:checked').value),
+                    course_organization: Number(document.querySelector('input[name="course_organization"]:checked').value),
+                    student_engagement: Number(document.querySelector('input[name="student_engagement"]:checked').value),
+                    communication: Number(document.querySelector('input[name="communication"]:checked').value),
+                    availability: Number(document.querySelector('input[name="availability"]:checked').value)
+                };
+                const payload = new URLSearchParams({ action:'submit', teacher_email: 'teacher'+id+'@slssr.edu.ph', scores: JSON.stringify(scores), comments: (this.elements['comments']?.value || '') });
+                fetch('../api/evaluations_api.php?action=submit', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body: payload })
+                    .then(r=>r.json()).then(d=>{
+                        if (!d.ok) { alert(d.error || 'Failed'); return; }
+                        const toast = document.createElement('div');
+                        toast.className = 'alert alert-success position-fixed top-0 end-0 m-3';
+                        toast.style.zIndex = '9999';
+                        toast.innerHTML = '<strong>Success!</strong> Your evaluation has been submitted. Thank you for your feedback!';
+                        document.body.appendChild(toast);
+                        setTimeout(() => toast.remove(), 5000);
+                        evaluationModal.hide();
+                        setTimeout(() => location.reload(), 1500);
+                    }).catch(()=>alert('Network error'));
+            });
+        }
+
+        function createRatingButtons(name) {
+            const ratings = [
+                { value: 5, label: 'Excellent', color: 'success' },
+                { value: 4, label: 'Good', color: 'info' },
+                { value: 3, label: 'Average', color: 'warning' },
+                { value: 2, label: 'Below Average', color: 'orange' },
+                { value: 1, label: 'Poor', color: 'danger' }
+            ];
+            
+            return ratings.map(r => `
+                <label class="rating-option">
+                    <input type="radio" name="${name}" value="${r.value}" required>
+                    <span class="rating-label">${r.label} (${r.value})</span>
+                </label>
+            `).join('');
+        }
+
+        function viewEvaluation(id) {
+            document.getElementById('modalTitle').textContent = 'Your Evaluation';
+            document.getElementById('modalBody').innerHTML = `
+                <div class="alert alert-info">
+                    <strong>✅ Evaluation Submitted</strong>
+                    <p class="mb-0">You have already submitted your evaluation for this teacher. Thank you for your feedback!</p>
+                </div>
+                <p>Submitted on: ${new Date().toLocaleDateString()}</p>
+                <p class="text-muted">Your responses are kept confidential and used solely for improving teaching quality.</p>
+            `;
+            evaluationModal.show();
+        }
     </script>
 
     <style>
-        .error-404 {
-            padding: 2rem 0;
+        .rating-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
         }
         
-        .error-icon {
-            font-size: 4rem;
-            margin-bottom: 1rem;
-            animation: bounce 2s infinite;
+        .rating-option {
+            display: flex;
+            align-items: center;
+            padding: 0.5rem;
+            border: 1px solid #dee2e6;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            transition: all 0.2s;
         }
         
-        @keyframes bounce {
-            0%, 20%, 50%, 80%, 100% {
-                transform: translateY(0);
-            }
-            40% {
-                transform: translateY(-10px);
-            }
-            60% {
-                transform: translateY(-5px);
-            }
+        .rating-option:hover {
+            background-color: #f8f9fa;
+            border-color: #0d6efd;
         }
         
-        .feature-card {
-            padding: 1.5rem;
-            border: 2px solid #e9ecef;
-            border-radius: 12px;
-            height: 100%;
-            transition: all 0.3s ease;
+        .rating-option input[type="radio"] {
+            margin-right: 0.5rem;
         }
         
-        .feature-card:hover {
-            border-color: #017137;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(1, 113, 55, 0.1);
-        }
-        
-        .feature-icon {
-            font-size: 2.5rem;
-            margin-bottom: 1rem;
-        }
-        
-        .timeline {
-            position: relative;
-            padding-left: 2rem;
-        }
-        
-        .timeline::before {
-            content: '';
-            position: absolute;
-            left: 1rem;
-            top: 0;
-            bottom: 0;
-            width: 2px;
-            background: #e9ecef;
-        }
-        
-        .timeline-item {
-            position: relative;
-            margin-bottom: 2rem;
-        }
-        
-        .timeline-marker {
-            position: absolute;
-            left: -1.5rem;
-            top: 0.5rem;
-            width: 1rem;
-            height: 1rem;
-            border-radius: 50%;
-            border: 3px solid white;
-            box-shadow: 0 0 0 3px #e9ecef;
-        }
-        
-        .timeline-content {
-            padding-left: 1rem;
-        }
-        
-        .action-buttons {
-            margin-top: 2rem;
-        }
-        
-        /* Dark mode styles for 404 page */
-        .dark-mode .feature-card {
-            background: #2d2d2d !important;
-            border-color: #555 !important;
-            color: #e0e0e0 !important;
-        }
-        
-        .dark-mode .feature-card:hover {
-            border-color: #f7e24b !important;
-            box-shadow: 0 4px 12px rgba(247, 226, 75, 0.2) !important;
-        }
-        
-        .dark-mode .timeline::before {
-            background: #555 !important;
-        }
-        
-        .dark-mode .timeline-marker {
-            box-shadow: 0 0 0 3px #555 !important;
+        .rating-option input[type="radio"]:checked + .rating-label {
+            font-weight: bold;
+            color: #0d6efd;
         }
     </style>
 </body>

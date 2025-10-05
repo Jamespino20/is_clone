@@ -72,35 +72,7 @@ $userActivities = array_slice(array_filter($recentActivities, fn($a) => $a['user
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
-    <header class="topbar">
-        <div class="topbar-left">
-            <img src="assets/img/school-logo.png" alt="School Logo" class="topbar-logo">
-            <div class="topbar-title">
-                <h1>St. Luke's School of San Rafael</h1>
-                <span class="topbar-subtitle">Notifications</span>
-            </div>
-        </div>
-        <div class="topbar-right">
-            <div class="user-info">
-                <span class="user-name">Welcome, <?= htmlspecialchars($user['name']) ?></span>
-                <span class="user-role"><?= $userRole ?></span>
-            </div>
-            <nav>
-                <a href="profile.php" class="nav-link">Profile</a>
-                <a href="security.php" class="nav-link">Security</a>
-                <a href="notifications.php" class="nav-link">
-                  🔔 Notifications
-                  <?php $unread = array_filter($userNotifications, fn($n) => !$n['read']); if (count($unread) > 0): ?>
-                    <span class="badge bg-warning"><?= count($unread) ?></span>
-                  <?php endif; ?>
-                </a>
-                <?php if ($userRole === 'Administrator'): ?>
-                  <a href="audit_logs.php" class="nav-link">📋 Audit Logs</a>
-                <?php endif; ?>
-                <a href="api/logout.php" class="nav-link logout">Logout</a>
-            </nav>
-        </div>
-    </header>
+    <?php $subtitle = 'Notifications'; $assetPrefix = ''; $unreadNotifications = array_filter($userNotifications, fn($n)=>!$n['read']); include __DIR__ . '/partials/header.php'; ?>
 
     <main class="container">
         <!-- Send Notification (Admin/Staff only) -->
@@ -274,9 +246,9 @@ $userActivities = array_slice(array_filter($recentActivities, fn($a) => $a['user
             e.preventDefault();
             
             const formData = new FormData(this);
-            formData.append('action', 'send_notification');
+            formData.append('action', 'send');
             
-            fetch('notifications.php', {
+            fetch('api/notifications_api.php', {
                 method: 'POST',
                 body: formData
             })
@@ -295,12 +267,11 @@ $userActivities = array_slice(array_filter($recentActivities, fn($a) => $a['user
         });
         
         function markAsRead(notificationId) {
-            fetch('notifications.php', {
+            const form = new URLSearchParams({ action:'mark_read', index: notificationId });
+            fetch('api/notifications_api.php', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: `action=mark_read&notification_id=${notificationId}`
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: form
             })
             .then(response => response.json())
             .then(data => {
