@@ -219,10 +219,12 @@ if (!$user || !has_permission(get_role_display_name($user['role']), 'Staff')) {
         }
 
         async function loadSentNotifications() {
+            const tbody = document.querySelector('#sentNotificationsTable tbody');
+            if (!tbody) {
+                return;
+            }
+
             try {
-                // For now, we'll show a placeholder since we don't have a sent notifications API yet
-                // In a real implementation, this would fetch sent notifications from the database
-                const tbody = document.querySelector('#sentNotificationsTable tbody');
                 tbody.innerHTML = `
                     <tr>
                         <td colspan="4" class="text-center text-muted">

@@ -64,7 +64,7 @@ try {
                         $e = strtolower($u['email'] ?? '');
                         if (!isset($byEmail[$e])) {
                             $students[] = [
-                                'id' => (int) (max(array_column($students, 'id')) ?: 0) + 1,
+                                'id' => (int) ((array_column($students, 'id') ? max(array_column($students, 'id')) : 0)) + 1,
                                 'name' => $u['name'] ?? '',
                                 'email' => $u['email'] ?? '',
                                 'student_id' => $u['student_id'] ?? 'STU' . rand(1000, 9999),
@@ -122,7 +122,8 @@ try {
                     json_response(['ok' => false, 'error' => 'Invalid grade level']);
                 }
 
-                $id = (int) (max(array_column($students, 'id')) ?: 0) + 1;
+                $ids = array_column($students, 'id');
+                $id = (int) ($ids ? max($ids) : 0) + 1;
                 $new = [
                     'id' => $id,
                     'name' => $name,

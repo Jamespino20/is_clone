@@ -107,8 +107,11 @@ switch ($action) {
             break;
         }
         
+        $ids = array_column($assignments, 'id');
+        $maxId = $ids ? max($ids) : 0;
+        
         $newAssignment = [
-            'id' => count($assignments) + 1,
+            'id' => $maxId + 1,
             'faculty_email' => strtolower($facultyEmail),
             'student_email' => strtolower($studentEmail),
             'subject' => $subject,
@@ -119,6 +122,45 @@ switch ($action) {
         $assignments[] = $newAssignment;
         write_faculty_assignments($file, $assignments);
         echo json_encode(['ok'=>true,'item'=>$newAssignment]);
+        break;
+    
+    case 'my_classes':
+        if ($user['role'] !== 'Faculty') {
+            echo json_encode(['ok'=>false,'error'=>'Only faculty can view their classes']);
+            break;
+        }
+        
+        $facultyEmail = strtolower($email);
+        $classes = [];
+        
+        foreach ($assignments as $assignment) {
+            $assignedFaculty = strtolower($assignment['faculty_email'] ?? '');
+            if ($assignedFaculty === $facultyEmail) {
+                $subject = $assignment['subject'] ?? 'Unknown Subject';
+                $studentEmail = $assignment['student_email'] ?? '';
+                
+                if (!isset($classes[$subject])) {
+                    $classes[$subject] = [
+                        'subject' => $subject,
+                        'students' => [],
+                        'student_count' => 0
+                    ];
+                }
+                
+                $student = get_user_by_email($studentEmail);
+                if ($student && $student['role'] === 'Student') {
+                    $classes[$subject]['students'][] = [
+                        'email' => $student['email'] ?? '',
+                        'name' => $student['name'] ?? 'Unknown',
+                        'student_id' => $student['student_id'] ?? '',
+                        'grade_level' => $student['grade_level'] ?? ''
+                    ];
+                    $classes[$subject]['student_count']++;
+                }
+            }
+        }
+        
+        echo json_encode(['ok'=>true,'classes'=>array_values($classes)]);
         break;
         
     default:

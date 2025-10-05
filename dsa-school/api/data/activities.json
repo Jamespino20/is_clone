@@ -1,110 +1,5 @@
 [
     {
-        "user_email": "espino.jamesbryant20+faculty@gmail.com",
-        "action": "dashboard_access",
-        "details": "Accessed main dashboard",
-        "timestamp": 1759672549,
-        "ip_address": "172.31.84.66"
-    },
-    {
-        "user_email": "espino.jamesbryant20+faculty@gmail.com",
-        "action": "dashboard_access",
-        "details": "Accessed main dashboard",
-        "timestamp": 1759672566,
-        "ip_address": "172.31.84.66"
-    },
-    {
-        "user_email": "espino.jamesbryant20+student@gmail.com",
-        "action": "dashboard_access",
-        "details": "Accessed main dashboard",
-        "timestamp": 1759672690,
-        "ip_address": "172.31.84.66"
-    },
-    {
-        "user_email": "espino.jamesbryant20+student@gmail.com",
-        "action": "dashboard_access",
-        "details": "Accessed main dashboard",
-        "timestamp": 1759672704,
-        "ip_address": "172.31.84.66"
-    },
-    {
-        "user_email": "espino.jamesbryant20+faculty@gmail.com",
-        "action": "dashboard_access",
-        "details": "Accessed main dashboard",
-        "timestamp": 1759673304,
-        "ip_address": "172.31.84.66"
-    },
-    {
-        "user_email": "espino.jamesbryant20+faculty@gmail.com",
-        "action": "dashboard_access",
-        "details": "Accessed main dashboard",
-        "timestamp": 1759673314,
-        "ip_address": "172.31.84.66"
-    },
-    {
-        "user_email": "espino.jamesbryant20+faculty@gmail.com",
-        "action": "dashboard_access",
-        "details": "Accessed main dashboard",
-        "timestamp": 1759673329,
-        "ip_address": "172.31.84.66"
-    },
-    {
-        "user_email": "espino.jamesbryant20+faculty@gmail.com",
-        "action": "dashboard_access",
-        "details": "Accessed main dashboard",
-        "timestamp": 1759673374,
-        "ip_address": "172.31.84.66"
-    },
-    {
-        "user_email": "espino.jamesbryant20+student@gmail.com",
-        "action": "dashboard_access",
-        "details": "Accessed main dashboard",
-        "timestamp": 1759673517,
-        "ip_address": "172.31.84.66"
-    },
-    {
-        "user_email": "espino.jamesbryant20+staff@gmail.com",
-        "action": "dashboard_access",
-        "details": "Accessed main dashboard",
-        "timestamp": 1759673690,
-        "ip_address": "172.31.84.66"
-    },
-    {
-        "user_email": "espino.jamesbryant20+staff@gmail.com",
-        "action": "dashboard_access",
-        "details": "Accessed main dashboard",
-        "timestamp": 1759673787,
-        "ip_address": "172.31.84.66"
-    },
-    {
-        "user_email": "espino.jamesbryant20+admin@gmail.com",
-        "action": "dashboard_access",
-        "details": "Accessed main dashboard",
-        "timestamp": 1759681162,
-        "ip_address": "172.31.89.2"
-    },
-    {
-        "user_email": "espino.jamesbryant20+admin@gmail.com",
-        "action": "dashboard_access",
-        "details": "Accessed main dashboard",
-        "timestamp": 1759681176,
-        "ip_address": "172.31.89.2"
-    },
-    {
-        "user_email": "espino.jamesbryant20+admin@gmail.com",
-        "action": "dashboard_access",
-        "details": "Accessed main dashboard",
-        "timestamp": 1759681217,
-        "ip_address": "172.31.89.2"
-    },
-    {
-        "user_email": "espino.jamesbryant20+admin@gmail.com",
-        "action": "dashboard_access",
-        "details": "Accessed main dashboard",
-        "timestamp": 1759681244,
-        "ip_address": "172.31.89.2"
-    },
-    {
         "user_email": "espino.jamesbryant20+student@gmail.com",
         "action": "dashboard_access",
         "details": "Accessed main dashboard",
@@ -698,5 +593,110 @@
         "details": "Accessed main dashboard",
         "timestamp": 1759690920,
         "ip_address": "::1"
+    },
+    {
+        "user_email": "espino.jamesbryant20+staff@gmail.com",
+        "action": "dashboard_access",
+        "details": "Accessed main dashboard",
+        "timestamp": 1759691268,
+        "ip_address": "172.31.67.226"
+    },
+    {
+        "user_email": "espino.jamesbryant20+staff@gmail.com",
+        "action": "dashboard_access",
+        "details": "Accessed main dashboard",
+        "timestamp": 1759691288,
+        "ip_address": "172.31.67.226"
+    },
+    {
+        "user_email": "espino.jamesbryant20+staff@gmail.com",
+        "action": "dashboard_access",
+        "details": "Accessed main dashboard",
+        "timestamp": 1759691297,
+        "ip_address": "172.31.67.226"
+    },
+    {
+        "user_email": "espino.jamesbryant20+staff@gmail.com",
+        "action": "dashboard_access",
+        "details": "Accessed main dashboard",
+        "timestamp": 1759691713,
+        "ip_address": "172.31.67.226"
+    },
+    {
+        "user_email": "espino.jamesbryant20+staff@gmail.com",
+        "action": "dashboard_access",
+        "details": "Accessed main dashboard",
+        "timestamp": 1759691771,
+        "ip_address": "172.31.67.226"
+    },
+    {
+        "user_email": "espino.jamesbryant20+staff@gmail.com",
+        "action": "dashboard_access",
+        "details": "Accessed main dashboard",
+        "timestamp": 1759691795,
+        "ip_address": "172.31.67.226"
+    },
+    {
+        "user_email": "espino.jamesbryant20+faculty@gmail.com",
+        "action": "dashboard_access",
+        "details": "Accessed main dashboard",
+        "timestamp": 1759691846,
+        "ip_address": "172.31.67.226"
+    },
+    {
+        "user_email": "espino.jamesbryant20+faculty@gmail.com",
+        "action": "dashboard_access",
+        "details": "Accessed main dashboard",
+        "timestamp": 1759691853,
+        "ip_address": "172.31.67.226"
+    },
+    {
+        "user_email": "espino.jamesbryant20+faculty@gmail.com",
+        "action": "dashboard_access",
+        "details": "Accessed main dashboard",
+        "timestamp": 1759691860,
+        "ip_address": "172.31.67.226"
+    },
+    {
+        "user_email": "espino.jamesbryant20+faculty@gmail.com",
+        "action": "dashboard_access",
+        "details": "Accessed main dashboard",
+        "timestamp": 1759691867,
+        "ip_address": "172.31.67.226"
+    },
+    {
+        "user_email": "espino.jamesbryant20+faculty@gmail.com",
+        "action": "dashboard_access",
+        "details": "Accessed main dashboard",
+        "timestamp": 1759691892,
+        "ip_address": "172.31.67.226"
+    },
+    {
+        "user_email": "espino.jamesbryant20+faculty@gmail.com",
+        "action": "dashboard_access",
+        "details": "Accessed main dashboard",
+        "timestamp": 1759691912,
+        "ip_address": "172.31.67.226"
+    },
+    {
+        "user_email": "espino.jamesbryant20+faculty@gmail.com",
+        "action": "dashboard_access",
+        "details": "Accessed main dashboard",
+        "timestamp": 1759692588,
+        "ip_address": "172.31.67.226"
+    },
+    {
+        "user_email": "espino.jamesbryant20+faculty@gmail.com",
+        "action": "dashboard_access",
+        "details": "Accessed main dashboard",
+        "timestamp": 1759692604,
+        "ip_address": "172.31.67.226"
+    },
+    {
+        "user_email": "espino.jamesbryant20+faculty@gmail.com",
+        "action": "dashboard_access",
+        "details": "Accessed main dashboard",
+        "timestamp": 1759692609,
+        "ip_address": "172.31.67.226"
     }
 ]

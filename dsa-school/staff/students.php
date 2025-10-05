@@ -329,16 +329,91 @@ $students = [];
         }
         loadEnrollment();
 
-        async function showManageSections(){
-            const level = prompt('Enter Year Level (e.g., Grade 7)');
-            if (!level) return;
-            await fetch('../api/staff_enrollment.php?action=add_year_level', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:new URLSearchParams({ level }) });
-            const section = prompt('Optionally add a Section for this level (e.g., St. Luke). Leave blank to skip.');
-            if (section) {
-                await fetch('../api/staff_enrollment.php?action=add_section', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:new URLSearchParams({ level, section }) });
+        async function showManageSections() {
+            const modal = new bootstrap.Modal(document.getElementById('manageSectionsModal'));
+            await loadSectionsForModal();
+            modal.show();
+        }
+        
+        async function loadSectionsForModal() {
+            try {
+                const res = await fetch('../api/staff_enrollment.php?action=list');
+                const data = await res.json();
+                if (!data.ok) return;
+                
+                const yearLevels = data.data.yearLevels || [];
+                const sections = data.data.sections || {};
+                
+                const container = document.getElementById('sectionsListModal');
+                if (yearLevels.length === 0) {
+                    container.innerHTML = '<p class="text-muted">No year levels configured yet.</p>';
+                    return;
+                }
+                
+                container.innerHTML = yearLevels.map(level => {
+                    const levelSections = sections[level] || [];
+                    return `
+                        <div class="mb-3 p-3 border rounded">
+                            <h5>${escapeHtml(level)}</h5>
+                            <div class="d-flex flex-wrap gap-2 mb-2">
+                                ${levelSections.map(s => `
+                                    <span class="badge bg-success">${escapeHtml(s)}</span>
+                                `).join('')}
+                                ${levelSections.length === 0 ? '<span class="text-muted">No sections</span>' : ''}
+                            </div>
+                            <button class="btn btn-sm btn-outline-primary" onclick="addSectionToLevel('${escapeHtml(level)}')">+ Add Section</button>
+                        </div>
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error('Error loading sections:', error);
             }
-            loadEnrollment();
-            showSuccess('Sections updated.');
+        }
+        
+        async function addNewYearLevel() {
+            const level = document.getElementById('newYearLevel').value.trim();
+            if (!level) {
+                showError('Please enter a year level');
+                return;
+            }
+            
+            try {
+                const res = await fetch('../api/staff_enrollment.php?action=add_year_level', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: new URLSearchParams({ level })
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    document.getElementById('newYearLevel').value = '';
+                    await loadSectionsForModal();
+                    await loadEnrollment();
+                    showSuccess('Year level added');
+                }
+            } catch (error) {
+                showError('Failed to add year level');
+            }
+        }
+        
+        async function addSectionToLevel(level) {
+            const section = prompt(`Enter section name for ${level}:`);
+            if (!section) return;
+            
+            try {
+                const res = await fetch('../api/staff_enrollment.php?action=add_section', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: new URLSearchParams({ level, section })
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    await loadSectionsForModal();
+                    await loadEnrollment();
+                    showSuccess('Section added');
+                }
+            } catch (error) {
+                showError('Failed to add section');
+            }
         }
         
         async function showAddStudentModal() {
@@ -498,5 +573,33 @@ $students = [];
             }
         }
     </script>
+
+    <!-- Manage Sections Modal -->
+    <div class="modal fade" id="manageSectionsModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Manage Year Levels & Sections</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-4">
+                        <h6>Add New Year Level</h6>
+                        <div class="input-group">
+                            <input type="text" id="newYearLevel" class="form-control" placeholder="e.g., Grade 7, Kinder">
+                            <button class="btn btn-primary" onclick="addNewYearLevel()">Add Year Level</button>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <h6>Existing Year Levels & Sections</h6>
+                    <div id="sectionsListModal">
+                        <p class="text-muted">Loading...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
