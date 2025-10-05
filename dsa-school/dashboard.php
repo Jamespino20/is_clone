@@ -30,6 +30,7 @@ $dsManager->logActivity($email, 'dashboard_access', 'Accessed main dashboard');
 $allNotifications = $dsManager->getNotificationQueue()->getAll();
 $userNotifications = array_filter($allNotifications, function($n) use ($email, $user) {
     // Include personal notifications and system notifications for this user's role
+    return ($n['user_email'] === $email) || 
            (isset($n['is_system']) && $n['is_system'] && 
             (empty($n['target_roles']) || in_array($user['role'], $n['target_roles'])));
 });
@@ -325,6 +326,18 @@ function get_activity_display_name($action) {
           }
 
           $pendingGrades = 0;
+          if (file_exists($gradesFile)) {
+            $gradesRaw = @file_get_contents($gradesFile);
+            $gradesData = json_decode($gradesRaw ?: '[]', true) ?: [];
+            $facultyGrades = array_filter($gradesData, function($g) use ($user) {
+              return strtolower($g['faculty_email'] ?? '') === strtolower($user['email']);
+            });
+            foreach ($facultyGrades as $grade) {
+              if (($grade['finals_grade'] ?? 0) == 0 || ($grade['midterm_grade'] ?? 0) == 0 || ($grade['prelim_grade'] ?? 0) == 0) {
+                $pendingGrades++;
+              }
+            }
+          }
           ?>
           <div class="stat-item">
             <div class="stat-icon">📚</div>
@@ -378,8 +391,8 @@ function get_activity_display_name($action) {
                 $studentCourses = [];
                 foreach ($gradesData as $grade) {
                   $studentId = $studentData['student_id'] ?? '';
-                  if (($grade['student_id'] ?? '') === $studentId && !empty($grade['subject'] ?? '')) {
-                    $studentCourses[$grade['subject']] = true;
+                  if (($grade['student_id'] ?? '') === $studentId && !empty($grade['class'] ?? '')) {
+                    $studentCourses[$grade['class']] = true;
                   }
                 }
                 $enrolledCourses = array_keys($studentCourses);
@@ -749,13 +762,13 @@ function get_activity_display_name($action) {
       .then(response => response.json())
       .then(data => {
         if (data.success) {
-          alert('Sample data added successfully! Refresh the page to see the changes.');
+          showSuccess('Sample data added successfully! Refresh the page to see the changes.');
         } else {
-          alert('Error: ' + data.error);
+          showError('Error: ' + data.error);
         }
       })
       .catch(error => {
-        alert('Error: ' + error);
+        showError('Error: ' + error);
       });
     }
 

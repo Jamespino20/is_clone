@@ -92,6 +92,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="assets/css/style.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="../assets/js/toast.js"></script>
 </head>
 <body>
     <?php $subtitle = 'Profile Management'; $assetPrefix = ''; include __DIR__ . '/partials/header.php'; ?>
@@ -242,7 +243,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             if (newPassword && newPassword !== confirmPassword) {
                 e.preventDefault();
-                alert('New passwords do not match!');
+                showError('New passwords do not match!');
             }
         });
     </script>

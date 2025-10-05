@@ -30,6 +30,7 @@ $totalNotifications = $dsManager->getNotificationQueue()->size();
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="../assets/css/style.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="../assets/js/toast.js"></script>
 </head>
 <body>
     <?php
@@ -135,7 +136,7 @@ $totalNotifications = $dsManager->getNotificationQueue()->size();
                     <div class="action-card">
                         <h4>Custom Report</h4>
                         <p>Generate custom filtered reports</p>
-                        <button class="btn btn-primary" onclick="alert('Custom report builder coming soon!')">⚙️ Configure</button>
+                        <button class="btn btn-primary" onclick="showInfo('Custom report builder coming soon!')">⚙️ Configure</button>
                     </div>
                 </div>
             </div>

@@ -24,6 +24,7 @@ if (!$user || $user['role'] !== 'Administrator') {
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="../assets/css/style.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="../assets/js/toast.js"></script>
 </head>
 <body>
     <?php
@@ -247,14 +248,14 @@ if (!$user || $user['role'] !== 'Administrator') {
             .then(response => response.json())
             .then(data => {
                 if (data.ok) {
-                    alert('General settings saved successfully!');
-                    location.reload();
+                    showSuccess('General settings saved successfully!');
+                    setTimeout(() => location.reload(), 1500);
                 } else {
-                    alert('Error: ' + data.error);
+                    showError('Error: ' + data.error);
                 }
             })
             .catch(error => {
-                alert('Error: ' + error);
+                showError('Error: ' + error);
             });
         });
 
@@ -271,14 +272,14 @@ if (!$user || $user['role'] !== 'Administrator') {
             .then(response => response.json())
             .then(data => {
                 if (data.ok) {
-                    alert('Security settings saved successfully!');
-                    location.reload();
+                    showSuccess('Security settings saved successfully!');
+                    setTimeout(() => location.reload(), 1500);
                 } else {
-                    alert('Error: ' + data.error);
+                    showError('Error: ' + data.error);
                 }
             })
             .catch(error => {
-                alert('Error: ' + error);
+                showError('Error: ' + error);
             });
         });
 
@@ -295,14 +296,14 @@ if (!$user || $user['role'] !== 'Administrator') {
             .then(response => response.json())
             .then(data => {
                 if (data.ok) {
-                    alert('Academic settings saved successfully!');
-                    location.reload();
+                    showSuccess('Academic settings saved successfully!');
+                    setTimeout(() => location.reload(), 1500);
                 } else {
-                    alert('Error: ' + data.error);
+                    showError('Error: ' + data.error);
                 }
             })
             .catch(error => {
-                alert('Error: ' + error);
+                showError('Error: ' + error);
             });
         });
 
@@ -319,14 +320,14 @@ if (!$user || $user['role'] !== 'Administrator') {
             .then(response => response.json())
             .then(data => {
                 if (data.ok) {
-                    alert('Academic configuration saved successfully!');
-                    location.reload();
+                    showSuccess('Academic configuration saved successfully!');
+                    setTimeout(() => location.reload(), 1500);
                 } else {
-                    alert('Error: ' + data.error);
+                    showError('Error: ' + data.error);
                 }
             })
             .catch(error => {
-                alert('Error: ' + error);
+                showError('Error: ' + error);
             });
         });
     </script>

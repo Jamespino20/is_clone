@@ -70,6 +70,7 @@ $userActivities = array_slice(array_filter($recentActivities, fn($a) => $a['user
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="assets/css/style.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="../assets/js/toast.js"></script>
 </head>
 <body>
     <?php $subtitle = 'Notifications'; $assetPrefix = ''; $unreadNotifications = array_filter($userNotifications, fn($n)=>!$n['read']); include __DIR__ . '/partials/header.php'; ?>
@@ -255,14 +256,14 @@ $userActivities = array_slice(array_filter($recentActivities, fn($a) => $a['user
             .then(response => response.json())
             .then(data => {
                 if (data.ok) {
-                    alert('Notification sent successfully!');
+                    showSuccess('Notification sent successfully!');
                     location.reload();
                 } else {
-                    alert('Error: ' + data.error);
+                    showError('Error: ' + data.error);
                 }
             })
             .catch(error => {
-                alert('Error: ' + error);
+                showError('Error: ' + error);
             });
         });
         
@@ -278,7 +279,7 @@ $userActivities = array_slice(array_filter($recentActivities, fn($a) => $a['user
                 if (data.ok) {
                     location.reload();
                 } else {
-                    alert('Error marking notification as read');
+                    showError('Error marking notification as read');
                 }
             });
         }

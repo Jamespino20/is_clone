@@ -24,6 +24,7 @@ if (!$user || !has_permission(get_role_display_name($user['role']), 'Faculty')) 
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="../assets/css/style.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="../assets/js/toast.js"></script>
 </head>
 <body>
     <?php
@@ -164,7 +165,7 @@ if (!$user || !has_permission(get_role_display_name($user['role']), 'Faculty')) 
         });
 
         function viewDetails(category) {
-            alert(`Viewing detailed evaluations for ${category}`);
+            showInfo(`Viewing detailed evaluations for ${category}`);
         }
     </script>
 </body>

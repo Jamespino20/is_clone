@@ -1,0 +1,22 @@
+[
+    {
+        "id": 1,
+        "student_id": "",
+        "student_name": "James Bryant Student",
+        "student_email": "espino.jamesbryant20+student@gmail.com",
+        "total_amount": 15000,
+        "paid_amount": 150000,
+        "balance": -135000,
+        "status": "Paid",
+        "last_payment_date": 1759681336,
+        "payment_history": [
+            {
+                "date": 1759681336,
+                "amount": 150000,
+                "method": "Cash",
+                "notes": "paid on time",
+                "recorded_by": "espino.jamesbryant20+staff@gmail.com"
+            }
+        ]
+    }
+]

@@ -24,6 +24,7 @@ if (!$user || $user['role'] !== 'Administrator') {
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="../assets/css/style.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="../assets/js/toast.js"></script>
 </head>
 <body>
     <?php $subtitle = 'Manage Notifications'; $assetPrefix = '..'; $userRole = get_role_display_name($user['role']); $unreadNotifications = []; include __DIR__ . '/../partials/header.php'; ?>
@@ -100,16 +101,85 @@ if (!$user || $user['role'] !== 'Administrator') {
             }
         });
 
-        document.getElementById('notificationForm').addEventListener('submit', function(e) {
+        document.getElementById('notificationForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             const title = document.getElementById('notifTitle').value;
             const message = document.getElementById('notifMessage').value;
             const type = document.getElementById('notifType').value;
             const targets = Array.from(document.getElementById('notifTarget').selectedOptions).map(opt => opt.value);
             
-            if (confirm(`Send "${title}" notification to ${targets.join(', ')}?`)) {
-                alert('Notification sent successfully!');
-                this.reset();
+            if (!targets.length) {
+                showError('Please select at least one target recipient');
+                return;
+            }
+            
+            if (!confirm(`Send "${title}" notification to ${targets.join(', ')}?`)) {
+                return;
+            }
+            
+            try {
+                const usersResponse = await fetch('../api/users_api.php?action=list');
+                const data = await usersResponse.json();
+                
+                if (!data.ok) {
+                    showError('Failed to fetch users: ' + (data.error || 'Unknown error'));
+                    return;
+                }
+                
+                const users = data.users;
+                
+                let recipients = [];
+                if (targets.includes('all')) {
+                    recipients = users;
+                } else {
+                    recipients = users.filter(user => targets.includes(user.role));
+                }
+                
+                if (recipients.length === 0) {
+                    showError('No recipients found for selected targets');
+                    return;
+                }
+                
+                let successCount = 0;
+                let errorCount = 0;
+                
+                for (const recipient of recipients) {
+                    const formData = new FormData();
+                    formData.append('action', 'send');
+                    formData.append('target_email', recipient.email);
+                    formData.append('title', title);
+                    formData.append('message', message);
+                    formData.append('type', type);
+                    
+                    try {
+                        const response = await fetch('../api/notifications_api.php', {
+                            method: 'POST',
+                            body: formData
+                        });
+                        const data = await response.json();
+                        
+                        if (data.ok) {
+                            successCount++;
+                        } else {
+                            errorCount++;
+                            console.error(`Failed to send to ${recipient.email}:`, data.error);
+                        }
+                    } catch (err) {
+                        errorCount++;
+                        console.error(`Error sending to ${recipient.email}:`, err);
+                    }
+                }
+                
+                if (successCount > 0) {
+                    showSuccess(`Notification sent successfully to ${successCount} recipient(s)!`);
+                    this.reset();
+                }
+                if (errorCount > 0) {
+                    showError(`Failed to send to ${errorCount} recipient(s). Check console for details.`);
+                }
+            } catch (error) {
+                showError('Error: ' + error.message);
+                console.error('Notification send error:', error);
             }
         });
     </script>

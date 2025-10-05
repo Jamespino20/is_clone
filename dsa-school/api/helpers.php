@@ -143,4 +143,53 @@ function totp_verify(string $secret, string $code, int $window = 1, int $period 
     }
     return false;
 }
+
+// -------- CSRF Protection --------
+function generate_csrf_token(): string {
+    if (session_status() !== PHP_SESSION_ACTIVE) {
+        session_start();
+    }
+    
+    $token = bin2hex(random_bytes(32));
+    $_SESSION['csrf_token'] = $token;
+    $_SESSION['csrf_token_time'] = time();
+    
+    return $token;
+}
+
+function validate_csrf_token(string $token): bool {
+    if (session_status() !== PHP_SESSION_ACTIVE) {
+        session_start();
+    }
+    
+    if (!isset($_SESSION['csrf_token']) || !isset($_SESSION['csrf_token_time'])) {
+        return false;
+    }
+    
+    $tokenAge = time() - $_SESSION['csrf_token_time'];
+    if ($tokenAge > 3600) {
+        unset($_SESSION['csrf_token']);
+        unset($_SESSION['csrf_token_time']);
+        return false;
+    }
+    
+    return hash_equals($_SESSION['csrf_token'], $token);
+}
+
+function get_csrf_token(): string {
+    if (session_status() !== PHP_SESSION_ACTIVE) {
+        session_start();
+    }
+    
+    if (!isset($_SESSION['csrf_token']) || !isset($_SESSION['csrf_token_time'])) {
+        return generate_csrf_token();
+    }
+    
+    $tokenAge = time() - $_SESSION['csrf_token_time'];
+    if ($tokenAge > 3600) {
+        return generate_csrf_token();
+    }
+    
+    return $_SESSION['csrf_token'];
+}
 ?>

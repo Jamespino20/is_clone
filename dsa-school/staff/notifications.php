@@ -24,6 +24,7 @@ if (!$user || !has_permission(get_role_display_name($user['role']), 'Staff')) {
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="../assets/css/style.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="../assets/js/toast.js"></script>
 </head>
 <body>
     <?php
@@ -204,7 +205,7 @@ if (!$user || !has_permission(get_role_display_name($user['role']), 'Staff')) {
                 searchInput.value = '';
                 updateRecipientsDisplay();
             } else {
-                alert('No students found matching your search.');
+                showWarning('No students found matching your search.');
             }
         }
 
@@ -243,7 +244,7 @@ if (!$user || !has_permission(get_role_display_name($user['role']), 'Staff')) {
             const recipients = Array.from(document.getElementById('recipients').selectedOptions).map(opt => opt.value);
 
             if (recipients.length === 0) {
-                alert('Please select at least one recipient.');
+                showWarning('Please select at least one recipient.');
                 return;
             }
 
@@ -266,15 +267,15 @@ if (!$user || !has_permission(get_role_display_name($user['role']), 'Staff')) {
             .then(results => {
                 const successCount = results.filter(r => r.ok).length;
                 if (successCount === recipients.length) {
-                    alert(`Notification sent successfully to ${successCount} recipients!`);
+                    showSuccess(`Notification sent successfully to ${successCount} recipients!`);
                     document.getElementById('notificationForm').reset();
                     loadSentNotifications();
                 } else {
-                    alert('Some notifications failed to send. Please try again.');
+                    showWarning('Some notifications failed to send. Please try again.');
                 }
             })
             .catch(error => {
-                alert('Error: ' + error);
+                showError('Error: ' + error);
             });
         });
 

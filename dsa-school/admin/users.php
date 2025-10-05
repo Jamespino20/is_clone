@@ -36,6 +36,7 @@ $unreadNotifications = array_filter($userNotifications, fn($n) => !$n['read']);
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="../assets/css/style.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="../assets/js/toast.js"></script>
 </head>
 <body>
     <?php $subtitle = 'User Management'; $assetPrefix = '..'; include __DIR__ . '/../partials/header.php'; ?>
@@ -196,11 +197,11 @@ $unreadNotifications = array_filter($userNotifications, fn($n) => !$n['read']);
         async function deleteUser(index) {
             const user = users[index];
             if (!user) return;
-            if (user.email === <?= json_encode($email) ?>) { alert('You cannot delete your own account.'); return; }
+            if (user.email === <?= json_encode($email) ?>) { showError('You cannot delete your own account.'); return; }
             if (!confirm('Are you sure you want to delete this user?')) return;
             const res = await fetch('../api/users_delete.php', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body: new URLSearchParams({ email: user.email }) });
             const data = await res.json();
-            if (!data.ok) { alert(data.error || 'Delete failed'); return; }
+            if (!data.ok) { showError(data.error || 'Delete failed'); return; }
             location.reload();
         }
         
@@ -219,11 +220,11 @@ $unreadNotifications = array_filter($userNotifications, fn($n) => !$n['read']);
               const endpoint = isEdit ? '../api/users_update.php' : '../api/users_create.php';
               const res = await fetch(endpoint, { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body: payload });
               const data = await res.json();
-              if (!data.ok) { alert(data.error || 'Save failed'); return; }
+              if (!data.ok) { showError(data.error || 'Save failed'); return; }
               closeUserModal();
               location.reload();
             } catch (err) {
-              alert('Network error');
+              showError('Network error');
             }
         });
     </script>

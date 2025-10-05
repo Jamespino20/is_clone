@@ -15,12 +15,6 @@ if (!$user || $user['role'] !== 'Student') {
     header('Location: ../dashboard.php');
     exit;
 }
-
-$teachers = [
-    ['id' => 1, 'name' => 'Prof. Maria Santos', 'subject' => 'Mathematics', 'evaluated' => false],
-    ['id' => 2, 'name' => 'Prof. Juan Reyes', 'subject' => 'Science', 'evaluated' => false],
-    ['id' => 3, 'name' => 'Prof. Ana Garcia', 'subject' => 'English', 'evaluated' => true]
-];
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -30,6 +24,7 @@ $teachers = [
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="../assets/css/style.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="../assets/js/toast.js"></script>
 </head>
 <body>
     <?php
@@ -53,22 +48,8 @@ $teachers = [
 
         <section class="card">
             <h3>Your Teachers</h3>
-            <div class="row">
-                <?php foreach ($teachers as $teacher): ?>
-                <div class="col-md-6 mb-3">
-                    <div class="action-card">
-                        <h5><?= htmlspecialchars($teacher['name']) ?></h5>
-                        <p class="text-muted"><?= htmlspecialchars($teacher['subject']) ?></p>
-                        <?php if ($teacher['evaluated']): ?>
-                            <span class="badge bg-success">✅ Evaluated</span>
-                            <button class="btn btn-sm btn-outline-primary mt-2" onclick="viewEvaluation(<?= $teacher['id'] ?>)">View Submission</button>
-                        <?php else: ?>
-                            <span class="badge bg-warning">⏳ Pending</span>
-                            <button class="btn btn-sm btn-primary mt-2" onclick="evaluateTeacher(<?= $teacher['id'] ?>, '<?= htmlspecialchars($teacher['name']) ?>', '<?= htmlspecialchars($teacher['subject']) ?>')">Evaluate Now</button>
-                        <?php endif; ?>
-                    </div>
-                </div>
-                <?php endforeach; ?>
+            <div class="row" id="teachersList">
+                <div class="col-12 text-center">Loading teachers...</div>
             </div>
         </section>
 
@@ -78,28 +59,28 @@ $teachers = [
                 <div class="stat-item">
                     <div class="stat-icon">📊</div>
                     <div class="stat-content">
-                        <h3><?= count($teachers) ?></h3>
+                        <h3 id="statTotal">0</h3>
                         <p>Total Teachers</p>
                     </div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-icon">✅</div>
                     <div class="stat-content">
-                        <h3><?= count(array_filter($teachers, fn($t) => $t['evaluated'])) ?></h3>
+                        <h3 id="statCompleted">0</h3>
                         <p>Completed</p>
                     </div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-icon">⏳</div>
                     <div class="stat-content">
-                        <h3><?= count(array_filter($teachers, fn($t) => !$t['evaluated'])) ?></h3>
+                        <h3 id="statPending">0</h3>
                         <p>Pending</p>
                     </div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-icon">📈</div>
                     <div class="stat-content">
-                        <h3><?= round((count(array_filter($teachers, fn($t) => $t['evaluated'])) / count($teachers)) * 100) ?>%</h3>
+                        <h3 id="statProgress">0%</h3>
                         <p>Progress</p>
                     </div>
                 </div>
@@ -126,11 +107,140 @@ $teachers = [
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        let evaluationModal;
-        
-        document.addEventListener('DOMContentLoaded', function() {
-            evaluationModal = new bootstrap.Modal(document.getElementById('evaluationModal'));
-        });
+        let teachers = [];
+
+        async function loadTeachers() {
+            try {
+                const res = await fetch('../api/faculty_api.php?action=list_for_student');
+                const data = await res.json();
+                if (data.ok && data.teachers) {
+                    teachers = data.teachers;
+                    renderTeachers();
+                    updateStats();
+                } else {
+                    document.getElementById('teachersList').innerHTML = '<div class="col-12 text-center text-muted">No teachers assigned yet</div>';
+                }
+            } catch (error) {
+                console.error('Error loading teachers:', error);
+                document.getElementById('teachersList').innerHTML = '<div class="col-12 text-center text-danger">Error loading teachers</div>';
+            }
+        }
+
+        function renderTeachers() {
+            const container = document.getElementById('teachersList');
+            container.innerHTML = teachers.map(teacher => `
+                <div class="col-md-6 mb-3">
+                    <div class="action-card">
+                        <h5>${escapeHtml(teacher.name || 'Unknown')}</h5>
+                        <p class="text-muted">${escapeHtml(teacher.subject || 'Subject')}</p>
+                        ${teacher.evaluated ? `
+                            <span class="badge bg-success">✅ Evaluated</span>
+                            <button class="btn btn-sm btn-outline-primary mt-2" onclick="viewEvaluation(${teacher.id})">View Submission</button>
+                        ` : `
+                            <span class="badge bg-warning">⏳ Pending</span>
+                            <button class="btn btn-sm btn-primary mt-2" onclick="evaluateTeacher(${teacher.id}, '${escapeHtml(teacher.name || '')}', '${escapeHtml(teacher.subject || '')}')">Evaluate Now</button>
+                        `}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateStats() {
+            const total = teachers.length;
+            const completed = teachers.filter(t => t.evaluated).length;
+            const pending = total - completed;
+            const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+            document.getElementById('statTotal').textContent = total;
+            document.getElementById('statCompleted').textContent = completed;
+            document.getElementById('statPending').textContent = pending;
+            document.getElementById('statProgress').textContent = progress + '%';
+        }
+
+        function escapeHtml(text) {
+            const map = {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'};
+            return String(text).replace(/[&<>"']/g, m => map[m]);
+        }
+
+        async function evaluateTeacher(id, name, subject) {
+            const modal = new bootstrap.Modal(document.getElementById('evaluationModal'));
+            document.getElementById('modalTitle').textContent = `Evaluate ${name} - ${subject}`;
+            
+            const questions = [
+                'How would you rate the teacher\'s subject knowledge?',
+                'How effective is the teacher\'s communication?',
+                'How well does the teacher engage students?',
+                'How fair is the teacher\'s grading?',
+                'How accessible is the teacher for help?'
+            ];
+
+            const modalBody = document.getElementById('modalBody');
+            modalBody.innerHTML = `
+                <form id="evaluationForm">
+                    ${questions.map((q, i) => `
+                        <div class="mb-3">
+                            <label class="form-label"><strong>${i + 1}. ${q}</strong></label>
+                            <select class="form-select" name="q${i}" required>
+                                <option value="">Select rating...</option>
+                                <option value="5">Excellent (5)</option>
+                                <option value="4">Very Good (4)</option>
+                                <option value="3">Good (3)</option>
+                                <option value="2">Fair (2)</option>
+                                <option value="1">Poor (1)</option>
+                            </select>
+                        </div>
+                    `).join('')}
+                    <div class="mb-3">
+                        <label class="form-label"><strong>Additional Comments (Optional)</strong></label>
+                        <textarea class="form-control" name="comments" rows="3"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Submit Evaluation</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </form>
+            `;
+
+            document.getElementById('evaluationForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const formData = new FormData(e.target);
+                
+                const scores = {};
+                questions.forEach((q, i) => {
+                    scores[`question_${i + 1}`] = parseInt(formData.get(`q${i}`));
+                });
+                
+                const comments = formData.get('comments') || '';
+
+                try {
+                    const teacher = teachers.find(t => t.id === id);
+                    const response = await fetch('../api/evaluations_api.php?action=submit', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                        body: new URLSearchParams({
+                            teacher_email: teacher.email,
+                            scores: JSON.stringify(scores),
+                            comments: comments
+                        })
+                    });
+
+                    const data = await response.json();
+                    if (data.ok) {
+                        showSuccess('Evaluation submitted successfully!');
+                        modal.hide();
+                        loadTeachers();
+                    } else {
+                        showError('Error: ' + (data.error || 'Unknown error'));
+                    }
+                } catch (error) {
+                    showError('Error submitting evaluation: ' + error.message);
+                }
+            });
+
+            modal.show();
+        }
+
+        function viewEvaluation(id) {
+            showSuccess('Your evaluation has been submitted and is anonymous. You cannot view it again.');
+        }
 
         function toggleDarkMode() {
             const body = document.body;
@@ -153,165 +263,8 @@ $teachers = [
                 document.body.classList.add('dark-mode');
                 document.getElementById('darkModeIcon').textContent = '☀️';
             }
+            loadTeachers();
         });
-
-        function evaluateTeacher(id, name, subject) {
-            document.getElementById('modalTitle').textContent = `Evaluate ${name}`;
-            document.getElementById('modalBody').innerHTML = `
-                <p class="mb-4"><strong>Subject:</strong> ${subject}</p>
-                <form id="evaluationForm">
-                    <input type="hidden" name="teacher_id" value="${id}">
-                    
-                    <div class="mb-4">
-                        <label class="form-label fw-bold">1. Teaching Effectiveness</label>
-                        <p class="text-muted small">How effectively does the teacher explain concepts?</p>
-                        <div class="rating-group">
-                            ${createRatingButtons('teaching_effectiveness')}
-                        </div>
-                    </div>
-
-                    <div class="mb-4">
-                        <label class="form-label fw-bold">2. Course Organization</label>
-                        <p class="text-muted small">How well organized are the lessons and materials?</p>
-                        <div class="rating-group">
-                            ${createRatingButtons('course_organization')}
-                        </div>
-                    </div>
-
-                    <div class="mb-4">
-                        <label class="form-label fw-bold">3. Student Engagement</label>
-                        <p class="text-muted small">How well does the teacher engage and motivate students?</p>
-                        <div class="rating-group">
-                            ${createRatingButtons('student_engagement')}
-                        </div>
-                    </div>
-
-                    <div class="mb-4">
-                        <label class="form-label fw-bold">4. Communication Skills</label>
-                        <p class="text-muted small">How clear and accessible is the teacher's communication?</p>
-                        <div class="rating-group">
-                            ${createRatingButtons('communication')}
-                        </div>
-                    </div>
-
-                    <div class="mb-4">
-                        <label class="form-label fw-bold">5. Availability and Support</label>
-                        <p class="text-muted small">How available and supportive is the teacher outside of class?</p>
-                        <div class="rating-group">
-                            ${createRatingButtons('availability')}
-                        </div>
-                    </div>
-
-                    <div class="mb-4">
-                        <label class="form-label fw-bold">Additional Comments (Optional)</label>
-                        <textarea class="form-control" name="comments" rows="4" placeholder="Share any additional feedback or suggestions..."></textarea>
-                    </div>
-
-                    <div class="alert alert-warning">
-                        <strong>Note:</strong> Your evaluation is anonymous and will be used solely to improve teaching quality.
-                    </div>
-
-                    <button type="submit" class="btn btn-primary w-100">Submit Evaluation</button>
-                </form>
-            `;
-            evaluationModal.show();
-
-            document.getElementById('evaluationForm').addEventListener('submit', function(e) {
-                e.preventDefault();
-                
-                const ratings = ['teaching_effectiveness', 'course_organization', 'student_engagement', 'communication', 'availability'];
-                const allRated = ratings.every(r => document.querySelector(`input[name="${r}"]:checked`));
-                
-                if (!allRated) {
-                    alert('Please rate all criteria before submitting.');
-                    return;
-                }
-
-                if (!confirm('Submit your evaluation? You will not be able to change it after submission.')) return;
-                const scores = {
-                    teaching_effectiveness: Number(document.querySelector('input[name="teaching_effectiveness"]:checked').value),
-                    course_organization: Number(document.querySelector('input[name="course_organization"]:checked').value),
-                    student_engagement: Number(document.querySelector('input[name="student_engagement"]:checked').value),
-                    communication: Number(document.querySelector('input[name="communication"]:checked').value),
-                    availability: Number(document.querySelector('input[name="availability"]:checked').value)
-                };
-                const payload = new URLSearchParams({ action:'submit', teacher_email: 'teacher'+id+'@slssr.edu.ph', scores: JSON.stringify(scores), comments: (this.elements['comments']?.value || '') });
-                fetch('../api/evaluations_api.php?action=submit', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body: payload })
-                    .then(r=>r.json()).then(d=>{
-                        if (!d.ok) { alert(d.error || 'Failed'); return; }
-                        const toast = document.createElement('div');
-                        toast.className = 'alert alert-success position-fixed top-0 end-0 m-3';
-                        toast.style.zIndex = '9999';
-                        toast.innerHTML = '<strong>Success!</strong> Your evaluation has been submitted. Thank you for your feedback!';
-                        document.body.appendChild(toast);
-                        setTimeout(() => toast.remove(), 5000);
-                        evaluationModal.hide();
-                        setTimeout(() => location.reload(), 1500);
-                    }).catch(()=>alert('Network error'));
-            });
-        }
-
-        function createRatingButtons(name) {
-            const ratings = [
-                { value: 5, label: 'Excellent', color: 'success' },
-                { value: 4, label: 'Good', color: 'info' },
-                { value: 3, label: 'Average', color: 'warning' },
-                { value: 2, label: 'Below Average', color: 'orange' },
-                { value: 1, label: 'Poor', color: 'danger' }
-            ];
-            
-            return ratings.map(r => `
-                <label class="rating-option">
-                    <input type="radio" name="${name}" value="${r.value}" required>
-                    <span class="rating-label">${r.label} (${r.value})</span>
-                </label>
-            `).join('');
-        }
-
-        function viewEvaluation(id) {
-            document.getElementById('modalTitle').textContent = 'Your Evaluation';
-            document.getElementById('modalBody').innerHTML = `
-                <div class="alert alert-info">
-                    <strong>✅ Evaluation Submitted</strong>
-                    <p class="mb-0">You have already submitted your evaluation for this teacher. Thank you for your feedback!</p>
-                </div>
-                <p>Submitted on: ${new Date().toLocaleDateString()}</p>
-                <p class="text-muted">Your responses are kept confidential and used solely for improving teaching quality.</p>
-            `;
-            evaluationModal.show();
-        }
     </script>
-
-    <style>
-        .rating-group {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-        
-        .rating-option {
-            display: flex;
-            align-items: center;
-            padding: 0.5rem;
-            border: 1px solid #dee2e6;
-            border-radius: 0.25rem;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        
-        .rating-option:hover {
-            background-color: #f8f9fa;
-            border-color: #0d6efd;
-        }
-        
-        .rating-option input[type="radio"] {
-            margin-right: 0.5rem;
-        }
-        
-        .rating-option input[type="radio"]:checked + .rating-label {
-            font-weight: bold;
-            color: #0d6efd;
-        }
-    </style>
 </body>
 </html>

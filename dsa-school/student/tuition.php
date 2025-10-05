@@ -15,21 +15,6 @@ if (!$user || $user['role'] !== 'Student') {
     header('Location: ../dashboard.php');
     exit;
 }
-
-// Sample tuition data
-$tuitionData = [
-    'current_balance' => 2500.00,
-    'total_fees' => 15000.00,
-    'paid_amount' => 12500.00,
-    'payment_history' => [
-        ['date' => '2024-01-15', 'amount' => 5000.00, 'method' => 'Bank Transfer', 'status' => 'Completed'],
-        ['date' => '2024-02-15', 'amount' => 5000.00, 'method' => 'Credit Card', 'status' => 'Completed'],
-        ['date' => '2024-03-15', 'amount' => 2500.00, 'method' => 'Cash', 'status' => 'Completed'],
-    ],
-    'upcoming_due' => [
-        ['date' => '2024-04-15', 'amount' => 2500.00, 'description' => 'Final Payment'],
-    ]
-];
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -39,6 +24,7 @@ $tuitionData = [
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="../assets/css/style.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="../assets/js/toast.js"></script>
 </head>
 <body>
     <?php
@@ -51,99 +37,60 @@ $tuitionData = [
     ?>
 
     <main class="container">
-        <!-- Tuition Summary -->
         <section class="card">
             <h2>💰 Tuition Summary</h2>
             <div class="stats-grid">
                 <div class="stat-item">
                     <div class="stat-icon">💳</div>
                     <div class="stat-content">
-                        <h3>₱<?= number_format($tuitionData['current_balance'], 2) ?></h3>
+                        <h3 id="statBalance">₱0.00</h3>
                         <p>Current Balance</p>
                     </div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-icon">✅</div>
                     <div class="stat-content">
-                        <h3>₱<?= number_format($tuitionData['paid_amount'], 2) ?></h3>
+                        <h3 id="statPaid">₱0.00</h3>
                         <p>Total Paid</p>
                     </div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-icon">📊</div>
                     <div class="stat-content">
-                        <h3><?= number_format(($tuitionData['paid_amount'] / $tuitionData['total_fees']) * 100, 1) ?>%</h3>
+                        <h3 id="statProgress">0%</h3>
                         <p>Payment Progress</p>
                     </div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-icon">📅</div>
                     <div class="stat-content">
-                        <h3><?= count($tuitionData['upcoming_due']) ?></h3>
-                        <p>Upcoming Due</p>
+                        <h3 id="statTotal">₱0.00</h3>
+                        <p>Total Fees</p>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- Payment Progress Bar -->
         <section class="card">
             <h3>Payment Progress</h3>
             <div class="progress mb-3" style="height: 25px;">
-                <div class="progress-bar bg-success" role="progressbar" 
-                     style="width: <?= ($tuitionData['paid_amount'] / $tuitionData['total_fees']) * 100 ?>%"
-                     aria-valuenow="<?= ($tuitionData['paid_amount'] / $tuitionData['total_fees']) * 100 ?>" 
-                     aria-valuemin="0" aria-valuemax="100">
-                    <?= number_format(($tuitionData['paid_amount'] / $tuitionData['total_fees']) * 100, 1) ?>%
+                <div id="progressBar" class="progress-bar bg-success" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                    0%
                 </div>
             </div>
             <div class="row text-center">
                 <div class="col-md-4">
-                    <strong>Total Fees:</strong> ₱<?= number_format($tuitionData['total_fees'], 2) ?>
+                    <strong>Total Fees:</strong> <span id="displayTotal">₱0.00</span>
                 </div>
                 <div class="col-md-4">
-                    <strong>Paid:</strong> ₱<?= number_format($tuitionData['paid_amount'], 2) ?>
+                    <strong>Paid:</strong> <span id="displayPaid">₱0.00</span>
                 </div>
                 <div class="col-md-4">
-                    <strong>Remaining:</strong> ₱<?= number_format($tuitionData['current_balance'], 2) ?>
+                    <strong>Remaining:</strong> <span id="displayBalance">₱0.00</span>
                 </div>
             </div>
         </section>
 
-        <!-- Upcoming Payments -->
-        <section class="card">
-            <h3>📅 Upcoming Payments</h3>
-            <div class="table-responsive">
-                <table class="table table-striped">
-                    <thead>
-                        <tr>
-                            <th>Due Date</th>
-                            <th>Amount</th>
-                            <th>Description</th>
-                            <th>Status</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($tuitionData['upcoming_due'] as $payment): ?>
-                        <tr>
-                            <td><?= date('M j, Y', strtotime($payment['date'])) ?></td>
-                            <td><strong>₱<?= number_format($payment['amount'], 2) ?></strong></td>
-                            <td><?= htmlspecialchars($payment['description']) ?></td>
-                            <td><span class="badge bg-warning">Pending</span></td>
-                            <td>
-                                <button class="btn btn-primary btn-sm" onclick="makePayment(<?= $payment['amount'] ?>)">
-                                    💳 Pay Now
-                                </button>
-                            </td>
-                        </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
-            </div>
-        </section>
-
-        <!-- Payment History -->
         <section class="card">
             <h3>📋 Payment History</h3>
             <div class="table-responsive">
@@ -154,29 +101,18 @@ $tuitionData = [
                             <th>Amount</th>
                             <th>Payment Method</th>
                             <th>Status</th>
-                            <th>Receipt</th>
+                            <th>Notes</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <?php foreach ($tuitionData['payment_history'] as $payment): ?>
+                    <tbody id="paymentHistory">
                         <tr>
-                            <td><?= date('M j, Y', strtotime($payment['date'])) ?></td>
-                            <td><strong>₱<?= number_format($payment['amount'], 2) ?></strong></td>
-                            <td><?= htmlspecialchars($payment['method']) ?></td>
-                            <td><span class="badge bg-success"><?= $payment['status'] ?></span></td>
-                            <td>
-                                <button class="btn btn-outline-primary btn-sm" onclick="downloadReceipt('<?= $payment['date'] ?>')">
-                                    📄 Download
-                                </button>
-                            </td>
+                            <td colspan="5" class="text-center">Loading payment history...</td>
                         </tr>
-                        <?php endforeach; ?>
                     </tbody>
                 </table>
             </div>
         </section>
 
-        <!-- Payment Methods -->
         <section class="card">
             <h3>💳 Payment Methods</h3>
             <div class="row">
@@ -208,13 +144,78 @@ $tuitionData = [
         </section>
     </main>
 
-    <!-- Dark Mode Toggle -->
     <div class="dark-mode-toggle" onclick="toggleDarkMode()">
         <span id="darkModeIcon">🌙</span>
     </div>
 
     <script>
-        // Dark mode functionality
+        let tuitionData = null;
+        
+        async function loadTuition() {
+            try {
+                const res = await fetch('../api/tuition_api.php?action=list');
+                const data = await res.json();
+                if (data.ok && data.item) {
+                    tuitionData = data.item;
+                    updateDisplay();
+                } else {
+                    console.error('Error loading tuition:', data.error);
+                    document.getElementById('paymentHistory').innerHTML = '<tr><td colspan="5" class="text-center text-muted">No tuition data available</td></tr>';
+                }
+            } catch (error) {
+                console.error('Error loading tuition:', error);
+                document.getElementById('paymentHistory').innerHTML = '<tr><td colspan="5" class="text-center text-danger">Error loading data</td></tr>';
+            }
+        }
+        
+        function updateDisplay() {
+            if (!tuitionData) return;
+            
+            const total = Number(tuitionData.total_amount || 0);
+            const paid = Number(tuitionData.paid_amount || 0);
+            const balance = Number(tuitionData.balance || 0);
+            const progress = total > 0 ? Math.round((paid / total) * 100) : 0;
+            
+            document.getElementById('statBalance').textContent = '₱' + balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            document.getElementById('statPaid').textContent = '₱' + paid.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            document.getElementById('statProgress').textContent = progress + '%';
+            document.getElementById('statTotal').textContent = '₱' + total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            
+            document.getElementById('progressBar').style.width = progress + '%';
+            document.getElementById('progressBar').setAttribute('aria-valuenow', progress.toString());
+            document.getElementById('progressBar').textContent = progress + '%';
+            
+            document.getElementById('displayTotal').textContent = '₱' + total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            document.getElementById('displayPaid').textContent = '₱' + paid.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            document.getElementById('displayBalance').textContent = '₱' + balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            
+            const history = tuitionData.payment_history || [];
+            const tbody = document.getElementById('paymentHistory');
+            
+            if (history.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No payment history</td></tr>';
+            } else {
+                tbody.innerHTML = history.map(payment => {
+                    const date = new Date(payment.date * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                    const amount = Number(payment.amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                    return `
+                        <tr>
+                            <td>${date}</td>
+                            <td><strong>₱${amount}</strong></td>
+                            <td>${escapeHtml(payment.method || 'N/A')}</td>
+                            <td><span class="badge bg-success">Completed</span></td>
+                            <td>${escapeHtml(payment.notes || '')}</td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+        }
+        
+        function escapeHtml(text) {
+            const map = {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'};
+            return String(text).replace(/[&<>"']/g, m => map[m]);
+        }
+        
         function toggleDarkMode() {
             const body = document.body;
             const icon = document.getElementById('darkModeIcon');
@@ -230,35 +231,29 @@ $tuitionData = [
             }
         }
         
-        // Load dark mode preference
         document.addEventListener('DOMContentLoaded', function() {
             const darkMode = localStorage.getItem('darkMode');
             if (darkMode === 'true') {
                 document.body.classList.add('dark-mode');
                 document.getElementById('darkModeIcon').textContent = '☀️';
             }
+            loadTuition();
         });
 
-        function makePayment(amount) {
-            if (confirm(`Process payment of ₱${amount.toFixed(2)}?`)) {
-                alert('Payment processing would be implemented here. Redirecting to payment gateway...');
-            }
-        }
-
-        function downloadReceipt(date) {
-            alert(`Downloading receipt for payment made on ${date}...`);
-        }
-
         function showBankDetails() {
-            alert('Bank Details:\n\nAccount Name: St. Luke\'s School of San Rafael\nAccount Number: 1234567890\nBank: Sample Bank\nBranch: Main Branch');
+            showInfo('Bank Details:\n\nAccount Name: St. Luke\'s School of San Rafael\nAccount Number: 1234567890\nBank: Sample Bank\nBranch: Main Branch');
         }
 
         function processCardPayment() {
-            alert('Redirecting to secure payment gateway...');
+            if (!tuitionData || tuitionData.balance <= 0) {
+                showWarning('No outstanding balance!');
+                return;
+            }
+            showInfo('Payment gateway integration would be implemented here.\n\nOutstanding balance: ₱' + Number(tuitionData.balance).toFixed(2));
         }
 
         function showOfficeHours() {
-            alert('Office Hours:\n\nMonday - Friday: 8:00 AM - 5:00 PM\nSaturday: 8:00 AM - 12:00 PM\nSunday: Closed');
+            showInfo('Office Hours:\n\nMonday - Friday: 8:00 AM - 5:00 PM\nSaturday: 8:00 AM - 12:00 PM\nSunday: Closed');
         }
     </script>
 
@@ -283,7 +278,6 @@ $tuitionData = [
             margin-bottom: 1rem;
         }
         
-        /* Dark mode styles */
         .dark-mode .payment-method-card {
             background: #2d2d2d !important;
             border-color: #555 !important;

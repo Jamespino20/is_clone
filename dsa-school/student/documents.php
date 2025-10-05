@@ -15,27 +15,6 @@ if (!$user || $user['role'] !== 'Student') {
     header('Location: ../dashboard.php');
     exit;
 }
-
-// Sample documents data
-$documents = [
-    'academic' => [
-        ['name' => 'Report Card (1st Quarter)', 'date' => '2024-01-15', 'size' => '2.3 MB', 'type' => 'PDF'],
-        ['name' => 'Report Card (2nd Quarter)', 'date' => '2024-03-15', 'size' => '2.1 MB', 'type' => 'PDF'],
-        ['name' => 'Certificate of Enrollment', 'date' => '2024-01-10', 'size' => '1.8 MB', 'type' => 'PDF'],
-        ['name' => 'Transcript of Records', 'date' => '2024-01-05', 'size' => '3.2 MB', 'type' => 'PDF'],
-    ],
-    'forms' => [
-        ['name' => 'Student Information Sheet', 'date' => '2024-01-01', 'size' => '1.2 MB', 'type' => 'PDF'],
-        ['name' => 'Parent Consent Form', 'date' => '2024-01-01', 'size' => '0.8 MB', 'type' => 'PDF'],
-        ['name' => 'Medical Certificate Template', 'date' => '2024-01-01', 'size' => '0.5 MB', 'type' => 'PDF'],
-        ['name' => 'Excuse Letter Template', 'date' => '2024-01-01', 'size' => '0.3 MB', 'type' => 'PDF'],
-    ],
-    'certificates' => [
-        ['name' => 'Good Moral Certificate', 'date' => '2024-02-01', 'size' => '1.5 MB', 'type' => 'PDF'],
-        ['name' => 'Honor Roll Certificate', 'date' => '2024-03-20', 'size' => '2.0 MB', 'type' => 'PDF'],
-        ['name' => 'Participation Certificate', 'date' => '2024-02-15', 'size' => '1.8 MB', 'type' => 'PDF'],
-    ]
-];
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -45,6 +24,7 @@ $documents = [
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="../assets/css/style.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="../assets/js/toast.js"></script>
 </head>
 <body>
     <?php
@@ -57,18 +37,16 @@ $documents = [
     ?>
 
     <main class="container">
-        <!-- Document Categories -->
         <section class="card">
             <h2>📄 My Documents</h2>
             <p class="text-muted">Download your official documents and forms from St. Luke's School.</p>
             
-            <!-- Search and Filter -->
             <div class="row mb-4">
                 <div class="col-md-6">
                     <input type="text" class="form-control" id="documentSearch" placeholder="Search documents...">
                 </div>
                 <div class="col-md-3">
-                    <select class="form-control" id="categoryFilter">
+                    <select class="form-control" id="categoryFilter" onchange="filterDocuments()">
                         <option value="all">All Categories</option>
                         <option value="academic">Academic Records</option>
                         <option value="forms">Forms & Templates</option>
@@ -76,7 +54,7 @@ $documents = [
                     </select>
                 </div>
                 <div class="col-md-3">
-                    <select class="form-control" id="typeFilter">
+                    <select class="form-control" id="typeFilter" onchange="filterDocuments()">
                         <option value="all">All Types</option>
                         <option value="PDF">PDF</option>
                         <option value="DOC">DOC</option>
@@ -86,175 +64,194 @@ $documents = [
             </div>
         </section>
 
-        <!-- Academic Records -->
         <section class="card">
             <h3>📚 Academic Records</h3>
             <div class="table-responsive">
-                <table class="table table-striped">
+                <table class="table table-hover">
                     <thead>
                         <tr>
                             <th>Document Name</th>
-                            <th>Date Issued</th>
-                            <th>File Size</th>
+                            <th>Date</th>
+                            <th>Size</th>
                             <th>Type</th>
-                            <th>Actions</th>
+                            <th>Action</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <?php foreach ($documents['academic'] as $doc): ?>
-                        <tr class="document-row" data-category="academic" data-type="<?= $doc['type'] ?>">
-                            <td>
-                                <div class="d-flex align-items-center">
-                                    <span class="file-icon me-2">📄</span>
-                                    <strong><?= htmlspecialchars($doc['name']) ?></strong>
-                                </div>
-                            </td>
-                            <td><?= date('M j, Y', strtotime($doc['date'])) ?></td>
-                            <td><?= $doc['size'] ?></td>
-                            <td><span class="badge bg-primary"><?= $doc['type'] ?></span></td>
-                            <td>
-                                <button class="btn btn-primary btn-sm me-2" onclick="downloadDocument('<?= $doc['name'] ?>')">
-                                    📥 Download
-                                </button>
-                                <button class="btn btn-outline-secondary btn-sm" onclick="previewDocument('<?= $doc['name'] ?>')">
-                                    👁️ Preview
-                                </button>
-                            </td>
-                        </tr>
-                        <?php endforeach; ?>
+                    <tbody id="academicDocs">
+                        <tr><td colspan="5" class="text-center">Loading...</td></tr>
                     </tbody>
                 </table>
             </div>
         </section>
 
-        <!-- Forms & Templates -->
         <section class="card">
             <h3>📋 Forms & Templates</h3>
             <div class="table-responsive">
-                <table class="table table-striped">
+                <table class="table table-hover">
                     <thead>
                         <tr>
                             <th>Document Name</th>
-                            <th>Date Added</th>
-                            <th>File Size</th>
+                            <th>Date</th>
+                            <th>Size</th>
                             <th>Type</th>
-                            <th>Actions</th>
+                            <th>Action</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <?php foreach ($documents['forms'] as $doc): ?>
-                        <tr class="document-row" data-category="forms" data-type="<?= $doc['type'] ?>">
-                            <td>
-                                <div class="d-flex align-items-center">
-                                    <span class="file-icon me-2">📋</span>
-                                    <strong><?= htmlspecialchars($doc['name']) ?></strong>
-                                </div>
-                            </td>
-                            <td><?= date('M j, Y', strtotime($doc['date'])) ?></td>
-                            <td><?= $doc['size'] ?></td>
-                            <td><span class="badge bg-success"><?= $doc['type'] ?></span></td>
-                            <td>
-                                <button class="btn btn-primary btn-sm me-2" onclick="downloadDocument('<?= $doc['name'] ?>')">
-                                    📥 Download
-                                </button>
-                                <button class="btn btn-outline-secondary btn-sm" onclick="previewDocument('<?= $doc['name'] ?>')">
-                                    👁️ Preview
-                                </button>
-                            </td>
-                        </tr>
-                        <?php endforeach; ?>
+                    <tbody id="formsDocs">
+                        <tr><td colspan="5" class="text-center">Loading...</td></tr>
                     </tbody>
                 </table>
             </div>
         </section>
 
-        <!-- Certificates -->
         <section class="card">
             <h3>🏆 Certificates</h3>
             <div class="table-responsive">
-                <table class="table table-striped">
+                <table class="table table-hover">
                     <thead>
                         <tr>
                             <th>Document Name</th>
-                            <th>Date Issued</th>
-                            <th>File Size</th>
+                            <th>Date</th>
+                            <th>Size</th>
                             <th>Type</th>
-                            <th>Actions</th>
+                            <th>Action</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <?php foreach ($documents['certificates'] as $doc): ?>
-                        <tr class="document-row" data-category="certificates" data-type="<?= $doc['type'] ?>">
-                            <td>
-                                <div class="d-flex align-items-center">
-                                    <span class="file-icon me-2">🏆</span>
-                                    <strong><?= htmlspecialchars($doc['name']) ?></strong>
-                                </div>
-                            </td>
-                            <td><?= date('M j, Y', strtotime($doc['date'])) ?></td>
-                            <td><?= $doc['size'] ?></td>
-                            <td><span class="badge bg-warning"><?= $doc['type'] ?></span></td>
-                            <td>
-                                <button class="btn btn-primary btn-sm me-2" onclick="downloadDocument('<?= $doc['name'] ?>')">
-                                    📥 Download
-                                </button>
-                                <button class="btn btn-outline-secondary btn-sm" onclick="previewDocument('<?= $doc['name'] ?>')">
-                                    👁️ Preview
-                                </button>
-                            </td>
-                        </tr>
-                        <?php endforeach; ?>
+                    <tbody id="certificatesDocs">
+                        <tr><td colspan="5" class="text-center">Loading...</td></tr>
                     </tbody>
                 </table>
             </div>
         </section>
 
-        <!-- Document Request -->
         <section class="card">
-            <h3>📝 Request New Document</h3>
-            <p class="text-muted">Need a document that's not listed here? Request it from the registrar's office.</p>
-            <form id="documentRequestForm">
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label for="requestType" class="form-label">Document Type</label>
-                            <select class="form-control" id="requestType" required>
-                                <option value="">Select document type</option>
-                                <option value="transcript">Official Transcript</option>
-                                <option value="diploma">Diploma Copy</option>
-                                <option value="enrollment">Certificate of Enrollment</option>
-                                <option value="good_moral">Good Moral Certificate</option>
-                                <option value="other">Other</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label for="urgency" class="form-label">Urgency</label>
-                            <select class="form-control" id="urgency" required>
-                                <option value="normal">Normal (3-5 business days)</option>
-                                <option value="urgent">Urgent (1-2 business days)</option>
-                                <option value="rush">Rush (Same day)</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-                <div class="mb-3">
-                    <label for="requestNotes" class="form-label">Additional Notes</label>
-                    <textarea class="form-control" id="requestNotes" rows="3" placeholder="Please provide any additional information about your request..."></textarea>
-                </div>
-                <button type="submit" class="btn btn-success">📤 Submit Request</button>
-            </form>
+            <h3>📩 Request a Document</h3>
+            <p class="text-muted">Need a specific document? Request it here and we'll prepare it for you.</p>
+            <button class="btn btn-primary" onclick="requestDocument()">+ Request Document</button>
         </section>
     </main>
 
-    <!-- Dark Mode Toggle -->
     <div class="dark-mode-toggle" onclick="toggleDarkMode()">
         <span id="darkModeIcon">🌙</span>
     </div>
 
     <script>
-        // Dark mode functionality
+        let allDocuments = { academic: [], forms: [], certificates: [] };
+
+        async function loadDocuments() {
+            try {
+                const res = await fetch('../api/documents_api.php?action=list_available');
+                const data = await res.json();
+                if (data.ok && data.documents) {
+                    allDocuments = data.documents;
+                    renderDocuments();
+                } else {
+                    showError('academic');
+                    showError('forms');
+                    showError('certificates');
+                }
+            } catch (error) {
+                console.error('Error loading documents:', error);
+                showError('academic');
+                showError('forms');
+                showError('certificates');
+            }
+        }
+
+        function renderDocuments() {
+            renderCategory('academic', allDocuments.academic || []);
+            renderCategory('forms', allDocuments.forms || []);
+            renderCategory('certificates', allDocuments.certificates || []);
+        }
+
+        function renderCategory(category, docs) {
+            const tbody = document.getElementById(category + 'Docs');
+            if (!docs || docs.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No documents available</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = docs.map(doc => {
+                const date = new Date(doc.date * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                return `
+                    <tr class="doc-row" data-category="${category}" data-type="${doc.type || 'PDF'}">
+                        <td><i class="bi bi-file-earmark-${doc.type?.toLowerCase() || 'pdf'}"></i> ${escapeHtml(doc.name || '')}</td>
+                        <td>${date}</td>
+                        <td>${escapeHtml(doc.size || 'N/A')}</td>
+                        <td><span class="badge bg-info">${escapeHtml(doc.type || 'PDF')}</span></td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary" onclick="downloadDocument('${escapeHtml(doc.name || '')}', '${doc.url || '#'}')">
+                                📥 Download
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function showError(category) {
+            const tbody = document.getElementById(category + 'Docs');
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No documents available</td></tr>';
+        }
+
+        function escapeHtml(text) {
+            const map = {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'};
+            return String(text).replace(/[&<>"']/g, m => map[m]);
+        }
+
+        function filterDocuments() {
+            const categoryFilter = document.getElementById('categoryFilter').value;
+            const typeFilter = document.getElementById('typeFilter').value;
+            const searchTerm = document.getElementById('documentSearch').value.toLowerCase();
+
+            document.querySelectorAll('.doc-row').forEach(row => {
+                const category = row.dataset.category;
+                const type = row.dataset.type;
+                const text = row.textContent.toLowerCase();
+
+                const matchesCategory = categoryFilter === 'all' || category === categoryFilter;
+                const matchesType = typeFilter === 'all' || type === typeFilter;
+                const matchesSearch = text.includes(searchTerm);
+
+                row.style.display = (matchesCategory && matchesType && matchesSearch) ? '' : 'none';
+            });
+        }
+
+        document.getElementById('documentSearch').addEventListener('input', filterDocuments);
+
+        function downloadDocument(name, url) {
+            if (url === '#' || !url) {
+                showWarning('Document download link not available yet. Please contact the school office.');
+                return;
+            }
+            window.open(url, '_blank');
+        }
+
+        async function requestDocument() {
+            const type = prompt('What document do you need?\n\nExamples:\n- Certificate of Enrollment\n- Transcript of Records\n- Good Moral Certificate\n- Medical Certificate');
+            if (!type) return;
+
+            const notes = prompt('Any additional notes or specifications? (optional)') || '';
+
+            try {
+                const formData = new URLSearchParams({ type, notes });
+                const res = await fetch('../api/documents_api.php?action=request', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: formData
+                });
+
+                const data = await res.json();
+                if (data.ok) {
+                    showSuccess('Document request submitted successfully! You will be notified when it\'s ready.');
+                } else {
+                    showError('Error: ' + (data.error || 'Unknown error'));
+                }
+            } catch (error) {
+                showError('Error submitting request: ' + error.message);
+            }
+        }
+
         function toggleDarkMode() {
             const body = document.body;
             const icon = document.getElementById('darkModeIcon');
@@ -270,89 +267,14 @@ $documents = [
             }
         }
         
-        // Load dark mode preference
         document.addEventListener('DOMContentLoaded', function() {
             const darkMode = localStorage.getItem('darkMode');
             if (darkMode === 'true') {
                 document.body.classList.add('dark-mode');
                 document.getElementById('darkModeIcon').textContent = '☀️';
             }
-        });
-
-        // Document search and filter functionality
-        document.getElementById('documentSearch').addEventListener('input', filterDocuments);
-        document.getElementById('categoryFilter').addEventListener('change', filterDocuments);
-        document.getElementById('typeFilter').addEventListener('change', filterDocuments);
-
-        function filterDocuments() {
-            const searchTerm = document.getElementById('documentSearch').value.toLowerCase();
-            const categoryFilter = document.getElementById('categoryFilter').value;
-            const typeFilter = document.getElementById('typeFilter').value;
-            
-            const rows = document.querySelectorAll('.document-row');
-            
-            rows.forEach(row => {
-                const documentName = row.querySelector('td:first-child').textContent.toLowerCase();
-                const category = row.dataset.category;
-                const type = row.dataset.type;
-                
-                const matchesSearch = documentName.includes(searchTerm);
-                const matchesCategory = categoryFilter === 'all' || category === categoryFilter;
-                const matchesType = typeFilter === 'all' || type === typeFilter;
-                
-                if (matchesSearch && matchesCategory && matchesType) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
-            });
-        }
-
-        function downloadDocument(documentName) {
-            if (confirm(`Download "${documentName}"?`)) {
-                alert(`Downloading ${documentName}...`);
-                // In a real application, this would trigger the actual download
-            }
-        }
-
-        function previewDocument(documentName) {
-            alert(`Opening preview for ${documentName}...`);
-            // In a real application, this would open a preview modal or new window
-        }
-
-        // Document request form
-        document.getElementById('documentRequestForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const requestType = document.getElementById('requestType').value;
-            const urgency = document.getElementById('urgency').value;
-            const notes = document.getElementById('requestNotes').value;
-            
-            if (!requestType) { alert('Please select a document type.'); return; }
-            if (!confirm(`Submit request for ${requestType} with ${urgency} priority?`)) return;
-            const form = new URLSearchParams({ action:'request', type: requestType, notes });
-            fetch('../api/documents_api.php?action=request', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body: form })
-                .then(r=>r.json()).then(d=>{
-                    if (!d.ok) { alert(d.error || 'Failed'); return; }
-                    alert('Document request submitted successfully! You will be notified when it\'s ready.');
-                    document.getElementById('documentRequestForm').reset();
-                }).catch(()=>alert('Network error'));
+            loadDocuments();
         });
     </script>
-
-    <style>
-        .file-icon {
-            font-size: 1.2rem;
-        }
-        
-        .document-row:hover {
-            background-color: #f8f9fa;
-        }
-        
-        /* Dark mode styles */
-        .dark-mode .document-row:hover {
-            background-color: #333 !important;
-        }
-    </style>
 </body>
 </html>

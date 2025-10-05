@@ -24,6 +24,7 @@ if (!$user || !has_permission(get_role_display_name($user['role']), 'Faculty')) 
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="../assets/css/style.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="../assets/js/toast.js"></script>
 </head>
 <body>
     <?php
@@ -42,27 +43,6 @@ if (!$user || !has_permission(get_role_display_name($user['role']), 'Faculty')) 
                 <button class="btn btn-success" onclick="uploadMaterial()">+ Upload Material</button>
             </div>
             
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    <select class="form-control">
-                        <option>All Classes</option>
-                        <option>Mathematics - Grade 10</option>
-                        <option>Science - Grade 10</option>
-                        <option>English - Grade 10</option>
-                    </select>
-                </div>
-                <div class="col-md-6">
-                    <select class="form-control">
-                        <option>All Types</option>
-                        <option>Syllabus</option>
-                        <option>Lecture Notes</option>
-                        <option>Presentations</option>
-                        <option>Worksheets</option>
-                        <option>Readings</option>
-                    </select>
-                </div>
-            </div>
-            
             <div class="table-responsive">
                 <table class="table table-striped">
                     <thead>
@@ -75,31 +55,8 @@ if (!$user || !has_permission(get_role_display_name($user['role']), 'Faculty')) 
                             <th>Actions</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr>
-                            <td>📄 Course Syllabus</td>
-                            <td><span class="badge bg-primary">Syllabus</span></td>
-                            <td>Mathematics - Grade 10</td>
-                            <td><?= date('M j, Y', strtotime('-30 days')) ?></td>
-                            <td>45</td>
-                            <td>
-                                <button class="btn btn-sm btn-primary" onclick="viewMaterial('syllabus')">View</button>
-                                <button class="btn btn-sm btn-outline-secondary" onclick="editMaterial('syllabus')">Edit</button>
-                                <button class="btn btn-sm btn-outline-danger" onclick="deleteMaterial('syllabus')">Delete</button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>📊 Chapter 5 Presentation</td>
-                            <td><span class="badge bg-success">Presentation</span></td>
-                            <td>Mathematics - Grade 10</td>
-                            <td><?= date('M j, Y', strtotime('-7 days')) ?></td>
-                            <td>32</td>
-                            <td>
-                                <button class="btn btn-sm btn-primary" onclick="viewMaterial('presentation')">View</button>
-                                <button class="btn btn-sm btn-outline-secondary" onclick="editMaterial('presentation')">Edit</button>
-                                <button class="btn btn-sm btn-outline-danger" onclick="deleteMaterial('presentation')">Delete</button>
-                            </td>
-                        </tr>
+                    <tbody id="materialsTableBody">
+                        <tr><td colspan="6" class="text-center">Loading materials...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -111,28 +68,28 @@ if (!$user || !has_permission(get_role_display_name($user['role']), 'Faculty')) 
                 <div class="stat-item">
                     <div class="stat-icon">📁</div>
                     <div class="stat-content">
-                        <h3>12</h3>
+                        <h3 id="statTotal">0</h3>
                         <p>Total Materials</p>
                     </div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-icon">📥</div>
                     <div class="stat-content">
-                        <h3>245</h3>
+                        <h3 id="statDownloads">0</h3>
                         <p>Total Downloads</p>
                     </div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-icon">📊</div>
                     <div class="stat-content">
-                        <h3>3</h3>
-                        <p>Active Classes</p>
+                        <h3 id="statClasses">0</h3>
+                        <p>Classes Covered</p>
                     </div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-icon">🆕</div>
                     <div class="stat-content">
-                        <h3>2</h3>
+                        <h3 id="statRecent">0</h3>
                         <p>This Week</p>
                     </div>
                 </div>
@@ -146,6 +103,136 @@ if (!$user || !has_permission(get_role_display_name($user['role']), 'Faculty')) 
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        let materials = [];
+
+        async function loadMaterials() {
+            try {
+                const res = await fetch('../api/materials_api.php?action=list');
+                const data = await res.json();
+                if (data.ok && data.items) {
+                    materials = data.items;
+                    renderMaterials();
+                    updateStats();
+                } else {
+                    document.getElementById('materialsTableBody').innerHTML = '<tr><td colspan="6" class="text-center text-muted">No materials yet</td></tr>';
+                }
+            } catch (error) {
+                console.error('Error loading materials:', error);
+                document.getElementById('materialsTableBody').innerHTML = '<tr><td colspan="6" class="text-center text-danger">Error loading materials</td></tr>';
+            }
+        }
+
+        function renderMaterials() {
+            const tbody = document.getElementById('materialsTableBody');
+            if (materials.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No materials yet. Upload one to get started!</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = materials.map(material => {
+                const uploadedDate = new Date(material.uploaded * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                const typeBadge = material.type === 'Syllabus' ? 'primary' : (material.type === 'Presentation' ? 'success' : 'info');
+                return `
+                    <tr>
+                        <td>📄 ${escapeHtml(material.name || '')}</td>
+                        <td><span class="badge bg-${typeBadge}">${escapeHtml(material.type || '')}</span></td>
+                        <td>${escapeHtml(material.class || '')}</td>
+                        <td>${uploadedDate}</td>
+                        <td>${material.downloads || 0}</td>
+                        <td>
+                            <button class="btn btn-sm btn-primary" onclick="viewMaterial(${material.id})">View</button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteMaterial(${material.id})">Delete</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function updateStats() {
+            const total = materials.length;
+            const totalDownloads = materials.reduce((sum, m) => sum + (m.downloads || 0), 0);
+            const uniqueClasses = new Set(materials.map(m => m.class)).size;
+            const oneWeekAgo = Date.now() / 1000 - (7 * 24 * 60 * 60);
+            const recent = materials.filter(m => m.uploaded >= oneWeekAgo).length;
+
+            document.getElementById('statTotal').textContent = total;
+            document.getElementById('statDownloads').textContent = totalDownloads;
+            document.getElementById('statClasses').textContent = uniqueClasses;
+            document.getElementById('statRecent').textContent = recent;
+        }
+
+        function escapeHtml(text) {
+            const map = {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'};
+            return String(text).replace(/[&<>"']/g, m => map[m]);
+        }
+
+        async function uploadMaterial() {
+            const name = prompt('Material name:');
+            if (!name) return;
+
+            const type = prompt('Type (Syllabus/Lecture Notes/Presentation/Worksheets/Readings):', 'Lecture Notes') || 'Lecture Notes';
+            const className = prompt('Class (e.g., Mathematics - Grade 10):');
+            if (!className) return;
+
+            const url = prompt('Material URL (optional, for downloads):') || '#';
+            const size = prompt('File size (optional):', '1.0 MB') || '1.0 MB';
+
+            try {
+                const formData = new URLSearchParams({
+                    name, type, class: className, url, size
+                });
+
+                const res = await fetch('../api/materials_api.php?action=upload', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: formData
+                });
+
+                const data = await res.json();
+                if (data.ok) {
+                    showSuccess('Material uploaded successfully!');
+                    loadMaterials();
+                } else {
+                    showError('Error: ' + (data.error || 'Unknown error'));
+                }
+            } catch (error) {
+                showError('Error uploading material: ' + error.message);
+            }
+        }
+
+        function viewMaterial(id) {
+            const material = materials.find(m => m.id === id);
+            if (!material) return;
+
+            if (material.url && material.url !== '#') {
+                window.open(material.url, '_blank');
+            } else {
+                showWarning('No download URL available for this material.');
+            }
+        }
+
+        async function deleteMaterial(id) {
+            if (!confirm('Delete this material? This cannot be undone.')) return;
+
+            try {
+                const res = await fetch('../api/materials_api.php?action=delete', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: new URLSearchParams({ id })
+                });
+
+                const data = await res.json();
+                if (data.ok) {
+                    showSuccess('Material deleted!');
+                    loadMaterials();
+                } else {
+                    showError('Error: ' + (data.error || 'Unknown error'));
+                }
+            } catch (error) {
+                showError('Error deleting material: ' + error.message);
+            }
+        }
+
         function toggleDarkMode() {
             const body = document.body;
             const icon = document.getElementById('darkModeIcon');
@@ -167,26 +254,8 @@ if (!$user || !has_permission(get_role_display_name($user['role']), 'Faculty')) 
                 document.body.classList.add('dark-mode');
                 document.getElementById('darkModeIcon').textContent = '☀️';
             }
+            loadMaterials();
         });
-
-        function uploadMaterial() {
-            alert('Upload Material dialog would open here.');
-        }
-
-        function viewMaterial(id) {
-            alert(`Viewing material: ${id}`);
-        }
-
-        function editMaterial(id) {
-            alert(`Editing material: ${id}`);
-        }
-
-        function deleteMaterial(id) {
-            if (confirm(`Delete this material? This cannot be undone.`)) {
-                alert(`Material ${id} deleted.`);
-                location.reload();
-            }
-        }
     </script>
 </body>
 </html>

@@ -330,12 +330,12 @@
     });
 
     on($("googleSignIn"), "click", () =>
-      alert(
+      showInfo(
         "Google sign-in is not available. Please use the email/password form."
       )
     );
     on($("registerWithGoogle"), "click", () =>
-      alert(
+      showInfo(
         "Google sign-in is not available. Please use the registration form."
       )
     );

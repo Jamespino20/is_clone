@@ -24,6 +24,7 @@ if (!$user || !has_permission(get_role_display_name($user['role']), 'Staff')) {
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="../assets/css/style.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="../assets/js/toast.js"></script>
 </head>
 <body>
     <?php
@@ -186,7 +187,7 @@ if (!$user || !has_permission(get_role_display_name($user['role']), 'Staff')) {
             const section = document.getElementById('attSection').value;
 
             if (!grade || !section) {
-                alert('Please select both grade level and section');
+                showWarning('Please select both grade level and section');
                 return;
             }
 
@@ -201,7 +202,7 @@ if (!$user || !has_permission(get_role_display_name($user['role']), 'Staff')) {
                 const data = await response.json();
 
                 if (!data.ok) {
-                    alert('Failed to load students');
+                    showError('Failed to load students');
                     return;
                 }
 
@@ -220,7 +221,7 @@ if (!$user || !has_permission(get_role_display_name($user['role']), 'Staff')) {
                 document.getElementById('attendanceSection').style.display = 'block';
 
             } catch (error) {
-                alert('Error loading students: ' + error.message);
+                showError('Error loading students: ' + error.message);
             }
         }
 
@@ -293,14 +294,14 @@ if (!$user || !has_permission(get_role_display_name($user['role']), 'Staff')) {
 
                 const result = await response.json();
                 if (result.ok) {
-                    alert('Attendance saved successfully!');
+                    showSuccess('showSuccess('Attendance saved successfully!');
                     // Refresh the summary
                     loadAttendanceSummary();
                 } else {
-                    alert('Failed to save attendance: ' + (result.error || 'Unknown error'));
+                    showError('Failed to save attendance: ' + (result.error || 'Unknown error'));
                 }
             } catch (error) {
-                alert('Error saving attendance: ' + error.message);
+                showError('Error saving attendance: ' + error.message);
             }
         }
 
@@ -331,7 +332,7 @@ if (!$user || !has_permission(get_role_display_name($user['role']), 'Staff')) {
         document.getElementById('attGrade').addEventListener('change', loadSectionsForGrade);
 
         function generateReport(type) {
-            alert(`Generating ${type} attendance report...`);
+            showInfo(`Generating ${type} attendance report...`);
         }
     </script>
 </body>

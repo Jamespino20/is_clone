@@ -47,6 +47,7 @@ foreach ($allUsers as $u) {
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="../assets/css/style.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="../assets/js/toast.js"></script>
 </head>
 <body>
     <?php
@@ -289,12 +290,12 @@ foreach ($allUsers as $u) {
                 const result = await response.json();
                 
                 if (result.ok) {
-                    alert(`✅ Grades saved successfully! (${result.saved} records saved)`);
+                    showSuccess(`Grades saved successfully! (${result.saved} records saved)`);
                 } else {
-                    alert('❌ Error: ' + (result.error || 'Failed to save grades'));
+                    showError('Error: ' + (result.error || 'Failed to save grades'));
                 }
             } catch (error) {
-                alert('❌ Error: ' + error.message);
+                showError('Error: ' + error.message);
             }
         }
         

@@ -6,5 +6,13 @@
         "type": "info",
         "timestamp": 1759656504,
         "read": true
+    },
+    {
+        "user_email": "espino.jamesbryant20+student@gmail.com",
+        "title": "Test Notification",
+        "message": "This is a test notification to verify the API works",
+        "type": "success",
+        "timestamp": 1759682403,
+        "read": false
     }
 ]

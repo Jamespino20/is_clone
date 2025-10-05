@@ -35,6 +35,7 @@ $backups = array_map(function($file) {
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="../assets/css/style.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="../assets/js/toast.js"></script>
 </head>
 <body>
     <?php
@@ -188,14 +189,14 @@ $backups = array_map(function($file) {
                 .then(response => response.json())
                 .then(data => {
                     if (data.ok) {
-                        alert(`Backup created successfully: ${data.filename}`);
+                        showSuccess(`Backup created successfully: ${data.filename}`);
                         location.reload();
                     } else {
-                        alert('Error: ' + data.error);
+                        showError('Error: ' + data.error);
                     }
                 })
                 .catch(error => {
-                    alert('Error: ' + error);
+                    showError('Error: ' + error);
                 });
             }
         }
@@ -216,14 +217,14 @@ $backups = array_map(function($file) {
                 .then(response => response.json())
                 .then(data => {
                     if (data.ok) {
-                        alert('Backup restored successfully!');
+                        showSuccess('Backup restored successfully!');
                         location.reload();
                     } else {
-                        alert('Error: ' + data.error);
+                        showError('Error: ' + data.error);
                     }
                 })
                 .catch(error => {
-                    alert('Error: ' + error);
+                    showError('Error: ' + error);
                 });
             }
         }
@@ -240,14 +241,14 @@ $backups = array_map(function($file) {
                 .then(response => response.json())
                 .then(data => {
                     if (data.ok) {
-                        alert('Backup deleted successfully!');
+                        showSuccess('Backup deleted successfully!');
                         location.reload();
                     } else {
-                        alert('Error: ' + data.error);
+                        showError('Error: ' + data.error);
                     }
                 })
                 .catch(error => {
-                    alert('Error: ' + error);
+                    showError('Error: ' + error);
                 });
             }
         }
@@ -268,14 +269,14 @@ $backups = array_map(function($file) {
                     .then(response => response.json())
                     .then(data => {
                         if (data.ok) {
-                            alert('Backup restored successfully!');
+                            showSuccess('Backup restored successfully!');
                             location.reload();
                         } else {
-                            alert('Error: ' + data.error);
+                            showError('Error: ' + data.error);
                         }
                     })
                     .catch(error => {
-                        alert('Error: ' + error);
+                        showError('Error: ' + error);
                     });
                 }
             }

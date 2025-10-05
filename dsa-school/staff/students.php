@@ -16,45 +16,7 @@ if (!$user || !has_permission(get_role_display_name($user['role']), 'Staff')) {
     exit;
 }
 
-// Sample student data - in a real system, this would come from a database
-$students = [
-    [
-        'id' => 1,
-        'name' => 'Juan Dela Cruz',
-        'email' => 'juan.delacruz@slssr.edu.ph',
-        'student_id' => '2024-001',
-        'grade_level' => 'Grade 10',
-        'section' => 'St. Luke',
-        'enrollment_status' => 'Enrolled',
-        'tuition_balance' => 2500.00,
-        'attendance_rate' => 92.5,
-        'gpa' => 3.2
-    ],
-    [
-        'id' => 2,
-        'name' => 'Maria Santos',
-        'email' => 'maria.santos@slssr.edu.ph',
-        'student_id' => '2024-002',
-        'grade_level' => 'Grade 9',
-        'section' => 'St. Mark',
-        'enrollment_status' => 'Enrolled',
-        'tuition_balance' => 0.00,
-        'attendance_rate' => 95.8,
-        'gpa' => 3.8
-    ],
-    [
-        'id' => 3,
-        'name' => 'Pedro Rodriguez',
-        'email' => 'pedro.rodriguez@slssr.edu.ph',
-        'student_id' => '2024-003',
-        'grade_level' => 'Grade 11',
-        'section' => 'St. John',
-        'enrollment_status' => 'Dropped',
-        'tuition_balance' => 5000.00,
-        'attendance_rate' => 45.2,
-        'gpa' => 2.1
-    ]
-];
+$students = [];
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -64,6 +26,7 @@ $students = [
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="../assets/css/style.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="../assets/js/toast.js"></script>
 </head>
 <body>
     <?php
@@ -352,7 +315,7 @@ $students = [
                 await fetch('../api/staff_enrollment.php?action=add_section', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:new URLSearchParams({ level, section }) });
             }
             loadEnrollment();
-            alert('Sections updated.');
+            showSuccess('Sections updated.');
         }
         
         async function showAddStudentModal() {
@@ -365,12 +328,12 @@ $students = [
             const body = new URLSearchParams({ name, student_id, email, grade_level, section, status });
             const r = await fetch('../api/students_api.php?action=create', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body });
             const d = await r.json();
-            if (!d.ok) { alert(d.error||'Failed'); return; }
+            if (!d.ok) { showError(d.error||'Failed'); return; }
             await loadStudents();
-            alert('Student added.');
+            showSuccess('Student added.');
         }
         
-        function viewStudent(id) { const s = students.find(x=>x.id===id); alert(`Student: ${s?.name||''}\nID: ${s?.student_id||''}\nGrade: ${s?.grade_level||''} ${s?.section?'- '+s.section:''}`); }
+        function viewStudent(id) { const s = students.find(x=>x.id===id); showInfo(`Student: ${s?.name||''}\nID: ${s?.student_id||''}\nGrade: ${s?.grade_level||''} ${s?.section?'- '+s.section:''}`); }
         
         async function editStudent(id) {
             const s = students.find(x=>x.id===id); if (!s) return;
@@ -381,16 +344,16 @@ $students = [
             const status = prompt('Status (Enrolled/Dropped/Graduated):', s.enrollment_status||'Enrolled')||'Enrolled';
             const body = new URLSearchParams({ id, name, email, grade_level, section, enrollment_status: status });
             const r = await fetch('../api/students_api.php?action=update', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body });
-            const d = await r.json(); if (!d.ok){ alert(d.error||'Failed'); return; }
+            const d = await r.json(); if (!d.ok){ showError(d.error||'Failed'); return; }
             await loadStudents();
         }
-        async function deleteStudent(id){ if (!confirm('Delete this student?')) return; const r = await fetch('../api/students_api.php?action=delete', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:new URLSearchParams({ id }) }); const d = await r.json(); if (!d.ok){ alert(d.error||'Failed'); return; } await loadStudents(); }
+        async function deleteStudent(id){ if (!confirm('Delete this student?')) return; const r = await fetch('../api/students_api.php?action=delete', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:new URLSearchParams({ id }) }); const d = await r.json(); if (!d.ok){ showError(d.error||'Failed'); return; } await loadStudents(); }
         
         function exportData(format) {
             if (format === 'csv') {
                 exportAllStudentsCSV();
             } else if (format === 'pdf') {
-                alert('PDF export functionality coming soon!');
+                showInfo('PDF export functionality coming soon!'));
             }
         }
 
@@ -401,7 +364,7 @@ $students = [
                 const data = await response.json();
 
                 if (!data.ok || !data.items || data.items.length === 0) {
-                    alert('No student data available for export');
+                    showWarning('No student data available for export');
                     return;
                 }
 
@@ -419,9 +382,9 @@ $students = [
                 link.click();
                 document.body.removeChild(link);
 
-                alert(`Exported ${students.length} students to CSV successfully!`);
+                showSuccess(`Exported ${students.length} students to CSV successfully!`);
             } catch (error) {
-                alert('Error exporting CSV: ' + error.message);
+                showError('Error exporting CSV: ' + error.message);
             }
         }
 
@@ -458,7 +421,7 @@ $students = [
                 const currentSection = students.find(s => s.id === studentId)?.section || '';
 
                 if (sections.length === 0) {
-                    alert('No sections available for ' + currentGrade + '. Please add sections first.');
+                    showWarning('No sections available for ' + currentGrade + '. Please add sections first.');
                     return;
                 }
 
@@ -482,14 +445,14 @@ $students = [
 
                     const result = await response.json();
                     if (result.ok) {
-                        alert('Student assigned to section: ' + newSection);
+                        showSuccess('Student assigned to section: ' + newSection);
                         await loadStudents(); // Refresh the student list
                     } else {
-                        alert('Failed to assign section: ' + (result.error || 'Unknown error'));
+                        showError('Failed to assign section: ' + (result.error || 'Unknown error'));
                     }
                 }
             } catch (error) {
-                alert('Error assigning section: ' + error.message);
+                showError('Error assigning section: ' + error.message);
             }
         }
     </script>

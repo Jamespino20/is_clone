@@ -16,11 +16,7 @@ if (!$user || !has_permission(get_role_display_name($user['role']), 'Staff')) {
     exit;
 }
 
-$payments = [
-    ['id' => 1, 'student' => 'Juan Dela Cruz', 'student_id' => '2024-001', 'amount' => 5000, 'balance' => 2500, 'status' => 'Partial', 'date' => time() - 86400 * 30],
-    ['id' => 2, 'student' => 'Maria Santos', 'student_id' => '2024-002', 'amount' => 5000, 'balance' => 0, 'status' => 'Paid', 'date' => time() - 86400 * 15],
-    ['id' => 3, 'student' => 'Pedro Rodriguez', 'student_id' => '2024-003', 'amount' => 5000, 'balance' => 5000, 'status' => 'Unpaid', 'date' => time() - 86400 * 60]
-];
+$payments = [];
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -30,6 +26,7 @@ $payments = [
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="../assets/css/style.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="../assets/js/toast.js"></script>
 </head>
 <body>
     <?php
@@ -48,28 +45,28 @@ $payments = [
                 <div class="stat-item">
                     <div class="stat-icon">💰</div>
                     <div class="stat-content">
-                        <h3>₱<?= number_format(array_sum(array_column($payments, 'amount'))) ?></h3>
+                        <h3 id="statTotalExpected">₱0</h3>
                         <p>Total Expected</p>
                     </div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-icon">✅</div>
                     <div class="stat-content">
-                        <h3>₱<?= number_format(array_sum(array_column($payments, 'amount')) - array_sum(array_column($payments, 'balance'))) ?></h3>
+                        <h3 id="statCollected">₱0</h3>
                         <p>Collected</p>
                     </div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-icon">⏳</div>
                     <div class="stat-content">
-                        <h3>₱<?= number_format(array_sum(array_column($payments, 'balance'))) ?></h3>
+                        <h3 id="statOutstanding">₱0</h3>
                         <p>Outstanding</p>
                     </div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-icon">📊</div>
                     <div class="stat-content">
-                        <h3><?= round(((array_sum(array_column($payments, 'amount')) - array_sum(array_column($payments, 'balance'))) / array_sum(array_column($payments, 'amount'))) * 100) ?>%</h3>
+                        <h3 id="statCollectionRate">0%</h3>
                         <p>Collection Rate</p>
                     </div>
                 </div>
@@ -94,25 +91,7 @@ $payments = [
                             <th>Actions</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <?php foreach ($payments as $payment): ?>
-                        <tr>
-                            <td><?= htmlspecialchars($payment['student']) ?></td>
-                            <td><?= htmlspecialchars($payment['student_id']) ?></td>
-                            <td>₱<?= number_format($payment['amount'], 2) ?></td>
-                            <td>₱<?= number_format($payment['balance'], 2) ?></td>
-                            <td>
-                                <span class="badge bg-<?= $payment['status'] === 'Paid' ? 'success' : ($payment['status'] === 'Partial' ? 'warning' : 'danger') ?>">
-                                    <?= htmlspecialchars($payment['status']) ?>
-                                </span>
-                            </td>
-                            <td><?= date('M j, Y', $payment['date']) ?></td>
-                            <td>
-                                <button class="btn btn-sm btn-primary" onclick="viewDetails(<?= $payment['id'] ?>)">View</button>
-                                <button class="btn btn-sm btn-success" onclick="addPayment(<?= $payment['id'] ?>)">+ Payment</button>
-                            </td>
-                        </tr>
-                        <?php endforeach; ?>
+                    <tbody id="tuitionTableBody">
                     </tbody>
                 </table>
             </div>
@@ -148,21 +127,164 @@ $payments = [
             }
         });
 
-        function recordPayment() {
-            alert('Record Payment dialog would open here.');
-        }
-
-        function viewDetails(id) {
-            alert(`View payment details for ID: ${id}`);
-        }
-
-        function addPayment(id) {
-            const amount = prompt('Enter payment amount:');
-            if (amount) {
-                alert(`Payment of ₱${amount} recorded successfully!`);
-                location.reload();
+        let tuitionData = [];
+        
+        async function loadTuition() {
+            try {
+                const res = await fetch('../api/tuition_api.php?action=list');
+                const data = await res.json();
+                if (data.ok && data.items) {
+                    tuitionData = data.items;
+                    renderTuition();
+                    updateStats();
+                }
+            } catch (error) {
+                console.error('Error loading tuition:', error);
             }
         }
+        
+        function renderTuition() {
+            const tbody = document.getElementById('tuitionTableBody');
+            tbody.innerHTML = tuitionData.map(record => {
+                const statusClass = record.status === 'Paid' ? 'success' : (record.status === 'Partial' ? 'warning' : 'danger');
+                const lastPayment = record.last_payment_date ? new Date(record.last_payment_date * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A';
+                return `
+                    <tr>
+                        <td>${escapeHtml(record.student_name || '')}</td>
+                        <td>${escapeHtml(record.student_id || '')}</td>
+                        <td>₱${Number(record.total_amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                        <td>₱${Number(record.balance || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                        <td><span class="badge bg-${statusClass}">${escapeHtml(record.status || '')}</span></td>
+                        <td>${lastPayment}</td>
+                        <td>
+                            <button class="btn btn-sm btn-primary" onclick="viewDetails('${escapeHtml(record.student_email || '')}')">View</button>
+                            <button class="btn btn-sm btn-success" onclick="addPayment('${escapeHtml(record.student_email || '')}', '${escapeHtml(record.student_name || '')}')">+ Payment</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+        
+        function escapeHtml(text) {
+            const map = {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'};
+            return String(text).replace(/[&<>"']/g, m => map[m]);
+        }
+        
+        function updateStats() {
+            const totalExpected = tuitionData.reduce((sum, r) => sum + Number(r.total_amount || 0), 0);
+            const totalCollected = tuitionData.reduce((sum, r) => sum + Number(r.paid_amount || 0), 0);
+            const totalOutstanding = tuitionData.reduce((sum, r) => sum + Number(r.balance || 0), 0);
+            const collectionRate = totalExpected > 0 ? Math.round((totalCollected / totalExpected) * 100) : 0;
+            
+            document.getElementById('statTotalExpected').textContent = '₱' + totalExpected.toLocaleString('en-US');
+            document.getElementById('statCollected').textContent = '₱' + totalCollected.toLocaleString('en-US');
+            document.getElementById('statOutstanding').textContent = '₱' + totalOutstanding.toLocaleString('en-US');
+            document.getElementById('statCollectionRate').textContent = collectionRate + '%';
+        }
+        
+        async function recordPayment() {
+            const studentEmail = prompt('Enter student email:');
+            if (!studentEmail) return;
+            
+            const amount = prompt('Enter payment amount:');
+            if (!amount || isNaN(amount) || Number(amount) <= 0) {
+                showError('Invalid amount');
+                return;
+            }
+            
+            const method = prompt('Payment method (Cash/Credit Card/Bank Transfer):', 'Cash') || 'Cash';
+            const notes = prompt('Notes (optional):') || '';
+            
+            try {
+                const formData = new URLSearchParams({
+                    student_email: studentEmail,
+                    amount: amount,
+                    method: method,
+                    notes: notes
+                });
+                
+                const res = await fetch('../api/tuition_api.php?action=record_payment', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: formData
+                });
+                
+                const data = await res.json();
+                if (data.ok) {
+                    showSuccess('Payment recorded successfully!');
+                    loadTuition();
+                } else {
+                    showError('Error: ' + (data.error || 'Unknown error'));
+                }
+            } catch (error) {
+                showError('Error recording payment: ' + error.message);
+            }
+        }
+
+        function viewDetails(studentEmail) {
+            const record = tuitionData.find(r => r.student_email === studentEmail);
+            if (!record) {
+                showError('Record not found');
+                return;
+            }
+            
+            let details = `Student: ${record.student_name}\n`;
+            details += `Student ID: ${record.student_id}\n`;
+            details += `Total Amount: ₱${Number(record.total_amount || 0).toFixed(2)}\n`;
+            details += `Paid Amount: ₱${Number(record.paid_amount || 0).toFixed(2)}\n`;
+            details += `Balance: ₱${Number(record.balance || 0).toFixed(2)}\n`;
+            details += `Status: ${record.status}\n\n`;
+            
+            if (record.payment_history && record.payment_history.length > 0) {
+                details += 'Payment History:\n';
+                record.payment_history.forEach((payment, i) => {
+                    const date = new Date(payment.date * 1000).toLocaleDateString();
+                    details += `${i + 1}. ${date} - ₱${Number(payment.amount).toFixed(2)} (${payment.method})\n`;
+                });
+            } else {
+                details += 'No payment history';
+            }
+            
+            showInfo(details);
+        }
+
+        async function addPayment(studentEmail, studentName) {
+            const amount = prompt(`Enter payment amount for ${studentName}:`);
+            if (!amount || isNaN(amount) || Number(amount) <= 0) {
+                showError('Invalid amount');
+                return;
+            }
+            
+            const method = prompt('Payment method (Cash/Credit Card/Bank Transfer):', 'Cash') || 'Cash';
+            const notes = prompt('Notes (optional):') || '';
+            
+            try {
+                const formData = new URLSearchParams({
+                    student_email: studentEmail,
+                    amount: amount,
+                    method: method,
+                    notes: notes
+                });
+                
+                const res = await fetch('../api/tuition_api.php?action=record_payment', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: formData
+                });
+                
+                const data = await res.json();
+                if (data.ok) {
+                    showSuccess('Payment recorded successfully!');
+                    loadTuition();
+                } else {
+                    showError('Error: ' + (data.error || 'Unknown error'));
+                }
+            } catch (error) {
+                showError('Error recording payment: ' + error.message);
+            }
+        }
+        
+        loadTuition();
     </script>
 </body>
 </html>

@@ -69,6 +69,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="assets/css/style.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="../assets/js/toast.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 </head>
 <body>
@@ -270,7 +271,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         function copySecret() {
             const secret = '<?= $user['totp_secret'] ?>';
             navigator.clipboard.writeText(secret).then(() => {
-                alert('Secret code copied to clipboard!');
+                showSuccess('Secret code copied to clipboard!');
             });
         }
         
