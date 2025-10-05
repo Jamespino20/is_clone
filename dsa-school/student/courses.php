@@ -16,39 +16,75 @@ if (!$user || $user['role'] !== 'Student') {
     exit;
 }
 
-// Sample course data - in a real system, this would come from a database
-$courses = [
-    [
-        'id' => 1,
-        'code' => 'MATH101',
-        'name' => 'Algebra I',
-        'instructor' => 'Dr. Maria Santos',
-        'schedule' => 'MWF 9:00-10:00 AM',
-        'room' => 'Room 201',
-        'credits' => 3,
-        'status' => 'Enrolled'
-    ],
-    [
-        'id' => 2,
-        'code' => 'ENG101',
-        'name' => 'English Composition',
-        'instructor' => 'Prof. John Cruz',
-        'schedule' => 'TTH 10:30-12:00 PM',
-        'room' => 'Room 105',
-        'credits' => 3,
-        'status' => 'Enrolled'
-    ],
-    [
-        'id' => 3,
-        'code' => 'SCI101',
-        'name' => 'General Science',
-        'instructor' => 'Dr. Ana Reyes',
-        'schedule' => 'MWF 1:00-2:00 PM',
-        'room' => 'Lab 301',
-        'credits' => 4,
-        'status' => 'Enrolled'
+// Fetch student profile data from API
+$profileUrl = 'http://localhost:5000/api/student_data.php?action=profile';
+$profileContext = stream_context_create([
+    'http' => [
+        'method' => 'GET',
+        'header' => 'Cookie: ' . session_name() . '=' . session_id()
     ]
-];
+]);
+$profileResponse = @file_get_contents($profileUrl, false, $profileContext);
+$profileData = json_decode($profileResponse ?: '{}', true);
+$studentProfile = $profileData['student'] ?? [];
+
+// Fetch courses data from API
+$coursesUrl = 'http://localhost:5000/api/student_data.php?action=courses';
+$coursesContext = stream_context_create([
+    'http' => [
+        'method' => 'GET',
+        'header' => 'Cookie: ' . session_name() . '=' . session_id()
+    ]
+]);
+$coursesResponse = @file_get_contents($coursesUrl, false, $coursesContext);
+$coursesData = json_decode($coursesResponse ?: '{}', true);
+$courses = $coursesData['courses'] ?? [];
+
+// Fetch grades to calculate GPA
+$gradesUrl = 'http://localhost:5000/api/student_data.php?action=grades';
+$gradesContext = stream_context_create([
+    'http' => [
+        'method' => 'GET',
+        'header' => 'Cookie: ' . session_name() . '=' . session_id()
+    ]
+]);
+$gradesResponse = @file_get_contents($gradesUrl, false, $gradesContext);
+$gradesData = json_decode($gradesResponse ?: '{}', true);
+$grades = $gradesData['grades'] ?? [];
+
+// Calculate GPA from actual grades
+$totalAverage = 0;
+$gradeCount = 0;
+foreach ($grades as $grade) {
+    if (isset($grade['average']) && $grade['average'] > 0) {
+        $totalAverage += $grade['average'];
+        $gradeCount++;
+    }
+}
+$currentGPA = $gradeCount > 0 ? round($totalAverage / $gradeCount, 2) : 0;
+
+// Fetch attendance to calculate attendance rate
+$attendanceUrl = 'http://localhost:5000/api/student_data.php?action=attendance';
+$attendanceContext = stream_context_create([
+    'http' => [
+        'method' => 'GET',
+        'header' => 'Cookie: ' . session_name() . '=' . session_id()
+    ]
+]);
+$attendanceResponse = @file_get_contents($attendanceUrl, false, $attendanceContext);
+$attendanceData = json_decode($attendanceResponse ?: '{}', true);
+$attendanceRecords = $attendanceData['attendance'] ?? [];
+
+// Calculate attendance statistics
+$totalClasses = count($attendanceRecords);
+$presentCount = 0;
+$lateCount = 0;
+foreach ($attendanceRecords as $record) {
+    $status = strtolower($record['status'] ?? '');
+    if ($status === 'present') $presentCount++;
+    if ($status === 'late') $lateCount++;
+}
+$attendanceRate = $totalClasses > 0 ? round((($presentCount + $lateCount) / $totalClasses) * 100, 1) : 0;
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -71,36 +107,52 @@ $courses = [
 
     <main class="container">
         <section class="card">
-            <h2>Enrolled Courses</h2>
-            <p class="text-muted">Here are your current courses for this semester.</p>
-            
+            <h2>Student Profile</h2>
             <div class="row">
-                <?php foreach ($courses as $course): ?>
-                <div class="col-md-6 col-lg-4 mb-3">
-                    <div class="course-card">
-                        <div class="course-header">
-                            <h3><?= htmlspecialchars($course['code']) ?></h3>
-                            <span class="badge bg-success"><?= htmlspecialchars($course['status']) ?></span>
-                        </div>
-                        <h4><?= htmlspecialchars($course['name']) ?></h4>
-                        <div class="course-details">
-                            <p><strong>Instructor:</strong> <?= htmlspecialchars($course['instructor']) ?></p>
-                            <p><strong>Schedule:</strong> <?= htmlspecialchars($course['schedule']) ?></p>
-                            <p><strong>Room:</strong> <?= htmlspecialchars($course['room']) ?></p>
-                            <p><strong>Credits:</strong> <?= htmlspecialchars((string)$course['credits']) ?></p>
-                        </div>
-                        <div class="course-actions">
-                            <a href="course-details.php?id=<?= $course['id'] ?>" class="btn btn-primary btn-sm">View Details</a>
-                            <a href="../student/grades.php?course=<?= $course['id'] ?>" class="btn btn-outline-primary btn-sm">View Grades</a>
-                        </div>
-                    </div>
+                <div class="col-md-6">
+                    <p><strong>Name:</strong> <?= htmlspecialchars($studentProfile['name'] ?? $user['name']) ?></p>
+                    <p><strong>Email:</strong> <?= htmlspecialchars($studentProfile['email'] ?? $email) ?></p>
                 </div>
-                <?php endforeach; ?>
+                <div class="col-md-6">
+                    <p><strong>Grade Level:</strong> <?= htmlspecialchars((string)($studentProfile['grade_level'] ?? 'Not Assigned')) ?></p>
+                    <p><strong>Section:</strong> <?= htmlspecialchars($studentProfile['section'] ?? 'Not Assigned') ?></p>
+                </div>
             </div>
         </section>
 
         <section class="card">
-            <h2>Course Statistics</h2>
+            <h2>Enrolled Courses</h2>
+            <?php if (empty($courses)): ?>
+                <div class="alert alert-info">
+                    <p class="mb-0">No courses found. You may not be enrolled in any classes yet or no grades have been recorded.</p>
+                </div>
+            <?php else: ?>
+                <p class="text-muted">Here are your current courses based on recorded grades.</p>
+                
+                <div class="row">
+                    <?php foreach ($courses as $course): ?>
+                    <div class="col-md-6 col-lg-4 mb-3">
+                        <div class="course-card">
+                            <div class="course-header">
+                                <h3><?= htmlspecialchars($course['class']) ?></h3>
+                                <span class="badge bg-success">Enrolled</span>
+                            </div>
+                            <div class="course-details">
+                                <p><strong>Faculty:</strong> <?= htmlspecialchars($course['faculty_email']) ?></p>
+                            </div>
+                            <div class="course-actions">
+                                <a href="../student/grades.php" class="btn btn-primary btn-sm">View Grades</a>
+                                <a href="../student/attendance.php" class="btn btn-outline-primary btn-sm">View Attendance</a>
+                            </div>
+                        </div>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
+        </section>
+
+        <section class="card">
+            <h2>Academic Statistics</h2>
             <div class="row">
                 <div class="col-md-3">
                     <div class="stat-card">
@@ -110,33 +162,31 @@ $courses = [
                 </div>
                 <div class="col-md-3">
                     <div class="stat-card">
-                        <h3><?= array_sum(array_column($courses, 'credits')) ?></h3>
-                        <p>Total Credits</p>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="stat-card">
-                        <h3>3.2</h3>
+                        <h3><?= $currentGPA ?></h3>
                         <p>Current GPA</p>
                     </div>
                 </div>
                 <div class="col-md-3">
                     <div class="stat-card">
-                        <h3>85%</h3>
+                        <h3><?= $attendanceRate ?>%</h3>
                         <p>Attendance</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <h3><?= $gradeCount ?></h3>
+                        <p>Graded Quarters</p>
                     </div>
                 </div>
             </div>
         </section>
     </main>
 
-    <!-- Dark Mode Toggle -->
     <div class="dark-mode-toggle" onclick="toggleDarkMode()">
         <span id="darkModeIcon">🌙</span>
     </div>
 
     <script>
-        // Dark mode functionality
         function toggleDarkMode() {
             const body = document.body;
             const icon = document.getElementById('darkModeIcon');
@@ -152,7 +202,6 @@ $courses = [
             }
         }
         
-        // Load dark mode preference
         document.addEventListener('DOMContentLoaded', function() {
             const darkMode = localStorage.getItem('darkMode');
             if (darkMode === 'true') {

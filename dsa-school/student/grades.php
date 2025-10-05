@@ -16,34 +16,53 @@ if (!$user || $user['role'] !== 'Student') {
     exit;
 }
 
-// Sample grade data - in a real system, this would come from a database
-$grades = [
-    'Grade 10' => [
-        'school_year' => '2023-2024',
-        'semester' => 'First Semester',
-        'subjects' => [
-            ['code' => 'MATH', 'name' => 'Mathematics', 'units' => 3, 'q1' => 85, 'q2' => 88, 'q3' => 90, 'q4' => 87, 'final' => 87.5],
-            ['code' => 'ENG', 'name' => 'English', 'units' => 3, 'q1' => 92, 'q2' => 89, 'q3' => 91, 'q4' => 88, 'final' => 90.0],
-            ['code' => 'SCI', 'name' => 'Science', 'units' => 3, 'q1' => 78, 'q2' => 82, 'q3' => 85, 'q4' => 80, 'final' => 81.25],
-            ['code' => 'FIL', 'name' => 'Filipino', 'units' => 3, 'q1' => 88, 'q2' => 85, 'q3' => 87, 'q4' => 89, 'final' => 87.25],
-            ['code' => 'AP', 'name' => 'Araling Panlipunan', 'units' => 3, 'q1' => 90, 'q2' => 87, 'q3' => 89, 'q4' => 91, 'final' => 89.25],
-            ['code' => 'PE', 'name' => 'Physical Education', 'units' => 2, 'q1' => 95, 'q2' => 92, 'q3' => 94, 'q4' => 93, 'final' => 93.5],
-            ['code' => 'HEALTH', 'name' => 'Health', 'units' => 2, 'q1' => 89, 'q2' => 91, 'q3' => 88, 'q4' => 90, 'final' => 89.5],
-            ['code' => 'TLE', 'name' => 'Technology and Livelihood Education', 'units' => 2, 'q1' => 85, 'q2' => 88, 'q3' => 86, 'q4' => 87, 'final' => 86.5],
-        ]
+// Fetch student profile
+$profileUrl = 'http://localhost:5000/api/student_data.php?action=profile';
+$profileContext = stream_context_create([
+    'http' => [
+        'method' => 'GET',
+        'header' => 'Cookie: ' . session_name() . '=' . session_id()
     ]
-];
+]);
+$profileResponse = @file_get_contents($profileUrl, false, $profileContext);
+$profileData = json_decode($profileResponse ?: '{}', true);
+$studentProfile = $profileData['student'] ?? [];
 
-$gpa = 0;
-$totalUnits = 0;
-$totalPoints = 0;
+// Fetch grades from API
+$gradesUrl = 'http://localhost:5000/api/student_data.php?action=grades';
+$gradesContext = stream_context_create([
+    'http' => [
+        'method' => 'GET',
+        'header' => 'Cookie: ' . session_name() . '=' . session_id()
+    ]
+]);
+$gradesResponse = @file_get_contents($gradesUrl, false, $gradesContext);
+$gradesData = json_decode($gradesResponse ?: '{}', true);
+$allGrades = $gradesData['grades'] ?? [];
 
-foreach ($grades['Grade 10']['subjects'] as $subject) {
-    $totalUnits += $subject['units'];
-    $totalPoints += $subject['final'] * $subject['units'];
+// Group grades by class and quarter
+$gradesByClass = [];
+foreach ($allGrades as $grade) {
+    $className = $grade['class'] ?? 'Unknown';
+    $quarter = $grade['quarter'] ?? 'Q1';
+    
+    if (!isset($gradesByClass[$className])) {
+        $gradesByClass[$className] = [];
+    }
+    
+    $gradesByClass[$className][$quarter] = $grade;
 }
 
-$gpa = $totalUnits > 0 ? $totalPoints / $totalUnits : 0;
+// Calculate overall GPA
+$totalAverage = 0;
+$gradeCount = 0;
+foreach ($allGrades as $grade) {
+    if (isset($grade['average']) && $grade['average'] > 0) {
+        $totalAverage += $grade['average'];
+        $gradeCount++;
+    }
+}
+$gpa = $gradeCount > 0 ? round($totalAverage / $gradeCount, 2) : 0;
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -58,7 +77,7 @@ $gpa = $totalUnits > 0 ? $totalPoints / $totalUnits : 0;
             background: white;
             border: 2px solid #000;
             margin: 20px auto;
-            max-width: 800px;
+            max-width: 900px;
             font-family: 'Times New Roman', serif;
         }
         
@@ -98,7 +117,7 @@ $gpa = $totalUnits > 0 ? $totalPoints / $totalUnits : 0;
         
         .info-label {
             font-weight: bold;
-            min-width: 120px;
+            min-width: 140px;
         }
         
         .grades-table {
@@ -202,131 +221,128 @@ $gpa = $totalUnits > 0 ? $totalPoints / $totalUnits : 0;
                             <span><?= htmlspecialchars($user['name']) ?></span>
                         </div>
                         <div class="info-item">
-                            <span class="info-label">Student ID:</span>
-                            <span>2024-001</span>
+                            <span class="info-label">Email:</span>
+                            <span><?= htmlspecialchars($email) ?></span>
                         </div>
                         <div class="info-item">
                             <span class="info-label">Grade Level:</span>
-                            <span>Grade 10</span>
-                        </div>
-                        <div class="info-item">
-                            <span class="info-label">Section:</span>
-                            <span>St. Luke</span>
+                            <span><?= htmlspecialchars((string)($studentProfile['grade_level'] ?? 'Not Assigned')) ?></span>
                         </div>
                     </div>
                     <div>
                         <div class="info-item">
-                            <span class="info-label">School Year:</span>
-                            <span><?= $grades['Grade 10']['school_year'] ?></span>
+                            <span class="info-label">Section:</span>
+                            <span><?= htmlspecialchars($studentProfile['section'] ?? 'Not Assigned') ?></span>
                         </div>
                         <div class="info-item">
-                            <span class="info-label">Semester:</span>
-                            <span><?= $grades['Grade 10']['semester'] ?></span>
+                            <span class="info-label">School Year:</span>
+                            <span>2024-2025</span>
                         </div>
                         <div class="info-item">
                             <span class="info-label">Date Issued:</span>
                             <span><?= date('F j, Y') ?></span>
                         </div>
-                        <div class="info-item">
-                            <span class="info-label">LRN:</span>
-                            <span>123456789012</span>
-                        </div>
                     </div>
                 </div>
                 
-                <table class="grades-table">
-                    <thead>
-                        <tr>
-                            <th rowspan="2">Subject</th>
-                            <th rowspan="2">Units</th>
-                            <th colspan="4">Quarterly Grades</th>
-                            <th rowspan="2">Final Grade</th>
-                            <th rowspan="2">Remarks</th>
-                        </tr>
-                        <tr>
-                            <th>Q1</th>
-                            <th>Q2</th>
-                            <th>Q3</th>
-                            <th>Q4</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($grades['Grade 10']['subjects'] as $subject): ?>
-                        <tr>
-                            <td class="subject-name"><?= htmlspecialchars($subject['name']) ?></td>
-                            <td><?= $subject['units'] ?></td>
-                            <td><?= $subject['q1'] ?></td>
-                            <td><?= $subject['q2'] ?></td>
-                            <td><?= $subject['q3'] ?></td>
-                            <td><?= $subject['q4'] ?></td>
-                            <td><strong><?= number_format($subject['final'], 2) ?></strong></td>
-                            <td><?= $subject['final'] >= 75 ? 'PASSED' : 'FAILED' ?></td>
-                        </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
-                
-                <div class="summary-section">
-                    <h3 style="text-align: center; margin-bottom: 20px;">ACADEMIC SUMMARY</h3>
-                    <div class="summary-grid">
-                        <div class="summary-item">
-                            <div class="summary-value"><?= number_format($gpa, 2) ?></div>
-                            <div class="summary-label">GENERAL AVERAGE</div>
-                        </div>
-                        <div class="summary-item">
-                            <div class="summary-value"><?= $totalUnits ?></div>
-                            <div class="summary-label">TOTAL UNITS</div>
-                        </div>
-                        <div class="summary-item">
-                            <div class="summary-value"><?= count(array_filter($grades['Grade 10']['subjects'], fn($s) => $s['final'] >= 75)) ?></div>
-                            <div class="summary-label">SUBJECTS PASSED</div>
-                        </div>
-                        <div class="summary-item">
-                            <div class="summary-value"><?= $gpa >= 90 ? 'WITH HONORS' : ($gpa >= 85 ? 'WITH HIGH HONORS' : ($gpa >= 80 ? 'WITH HIGHEST HONORS' : 'PASSED')) ?></div>
-                            <div class="summary-label">ACADEMIC STANDING</div>
+                <?php if (empty($gradesByClass)): ?>
+                    <div class="alert alert-info">
+                        <p class="mb-0">No grades recorded yet. Your grades will appear here once faculty members enter them.</p>
+                    </div>
+                <?php else: ?>
+                    <table class="grades-table">
+                        <thead>
+                            <tr>
+                                <th rowspan="2" class="subject-name">Subject/Class</th>
+                                <th colspan="4">Quarters</th>
+                                <th rowspan="2">Average</th>
+                            </tr>
+                            <tr>
+                                <th>Q1</th>
+                                <th>Q2</th>
+                                <th>Q3</th>
+                                <th>Q4</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($gradesByClass as $className => $quarters): ?>
+                            <tr>
+                                <td class="subject-name"><?= htmlspecialchars($className) ?></td>
+                                <?php
+                                $quarterGrades = [];
+                                $quarterCount = 0;
+                                $totalGrade = 0;
+                                
+                                foreach (['Q1', 'Q2', 'Q3', 'Q4'] as $q) {
+                                    if (isset($quarters[$q]) && isset($quarters[$q]['average'])) {
+                                        $grade = $quarters[$q]['average'];
+                                        echo '<td>' . number_format($grade, 2) . '</td>';
+                                        if ($grade > 0) {
+                                            $totalGrade += $grade;
+                                            $quarterCount++;
+                                        }
+                                    } else {
+                                        echo '<td>-</td>';
+                                    }
+                                }
+                                
+                                $classAverage = $quarterCount > 0 ? $totalGrade / $quarterCount : 0;
+                                ?>
+                                <td><strong><?= $classAverage > 0 ? number_format($classAverage, 2) : '-' ?></strong></td>
+                            </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                    
+                    <div class="summary-section">
+                        <h3 style="margin-top: 0;">Academic Summary</h3>
+                        <div class="summary-grid">
+                            <div class="summary-item">
+                                <div class="summary-value"><?= $gpa ?></div>
+                                <div class="summary-label">Overall GPA</div>
+                            </div>
+                            <div class="summary-item">
+                                <div class="summary-value"><?= count($gradesByClass) ?></div>
+                                <div class="summary-label">Subjects Enrolled</div>
+                            </div>
+                            <div class="summary-item">
+                                <div class="summary-value"><?= $gradeCount ?></div>
+                                <div class="summary-label">Total Grades Recorded</div>
+                            </div>
                         </div>
                     </div>
-                </div>
-                
-                <div style="margin-top: 30px; display: flex; justify-content: space-between;">
-                    <div style="text-align: center;">
-                        <div style="border-top: 1px solid #000; width: 200px; margin-bottom: 5px;"></div>
-                        <strong>Registrar's Signature</strong>
-                    </div>
-                    <div style="text-align: center;">
-                        <div style="border-top: 1px solid #000; width: 200px; margin-bottom: 5px;"></div>
-                        <strong>Principal's Signature</strong>
-                    </div>
-                </div>
+                <?php endif; ?>
             </div>
         </div>
-        
-        <!-- Additional Grade History -->
-        <section class="card">
-            <h2>Grade History</h2>
-            <div class="row">
-                <div class="col-md-6">
-                    <h4>Current Semester Performance</h4>
-                    <div class="progress mb-2">
-                        <div class="progress-bar bg-success" style="width: <?= $gpa * 10 ?>%">
-                            <?= number_format($gpa, 1) ?>
-                        </div>
-                    </div>
-                    <p class="text-muted">Overall GPA: <?= number_format($gpa, 2) ?></p>
-                </div>
-                <div class="col-md-6">
-                    <h4>Subject Performance</h4>
-                    <?php foreach ($grades['Grade 10']['subjects'] as $subject): ?>
-                    <div class="d-flex justify-content-between align-items-center mb-1">
-                        <span><?= htmlspecialchars($subject['code']) ?></span>
-                        <span class="badge bg-<?= $subject['final'] >= 90 ? 'success' : ($subject['final'] >= 80 ? 'warning' : 'danger') ?>">
-                            <?= number_format($subject['final'], 1) ?>
-                        </span>
-                    </div>
-                    <?php endforeach; ?>
-                </div>
-            </div>
-        </section>
     </main>
+
+    <div class="dark-mode-toggle" onclick="toggleDarkMode()">
+        <span id="darkModeIcon">🌙</span>
+    </div>
+
+    <script>
+        function toggleDarkMode() {
+            const body = document.body;
+            const icon = document.getElementById('darkModeIcon');
+            
+            if (body.classList.contains('dark-mode')) {
+                body.classList.remove('dark-mode');
+                icon.textContent = '🌙';
+                localStorage.setItem('darkMode', 'false');
+            } else {
+                body.classList.add('dark-mode');
+                icon.textContent = '☀️';
+                localStorage.setItem('darkMode', 'true');
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            const darkMode = localStorage.getItem('darkMode');
+            if (darkMode === 'true') {
+                document.body.classList.add('dark-mode');
+                document.getElementById('darkModeIcon').textContent = '☀️';
+            }
+        });
+    </script>
 </body>
 </html>

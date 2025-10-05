@@ -1,0 +1,65 @@
+GENERAL SYSTEM-WIDE
+Real-time search with fuzzy matching: Done (dashboard live filter + suggestions; can swap to Fuse.js if needed).
+Persistent notifications across roles: Done (JSON-backed API + UI, unread badge, auto-refresh).
+Consistent header/UI: Done (shared header applied site‑wide).
+Missing module/button functions: Partially done (Admin Users CRUD; Staff Students CRUD; more still pending where noted below).
+Replace placeholders with real data: In progress (users, students, notifications, audit logs, attendance APIs wired; some dashboard cards still placeholder).
+Notification CSS consistency: Done (header + card styles).
+Logout/back warning: Done (global confirm + leave‑warning).
+Recent activity feed: Done (dashboard from activity stack; expanded sources).
+Responsive login logo: Already responsive; centered on mobile.
+K–10 + Q1–Q4 + Summer; Asia/Manila: Done (helpers config).
+DARK MODE
+Palette and consistency site-wide: Done (variables + Bootstrap overrides). Note: minor “banding” edge cases deferred per your instruction.
+ADMIN MODULE
+User Management (Create/Edit/Delete/Save): Done (JSON APIs + UI).
+Role rules (no self-delete, protect admin): Done (API guards).
+System Settings: UI present; persistence not yet wired to a config store.
+Reports (users working; others pending): Partially done (system-level stats, exports; specific enrollment/grade distribution/attendance/tuition summaries not fully implemented).
+Audit Logs: Done (utility + page; user CRUD/notifications logging).
+System Backups: UI implemented (simulated operations). Real file ops partially stubbed.
+Role Notifications (send/receive all roles): Done via notifications API.
+Section & Year Level Management: Done in Staff scope (enrollment API + UI manage); Admin-specific page not added (can reuse the Staff API if needed).
+STAFF MODULE
+Student Management (dark mode): Done.
+Add/Edit/Delete/View students: Done (students_api + UI).
+Year levels/sections management and assignment: Management Done; per-row “Assign to Section” action pending (stubbed).
+Export to CSV/PDF: CSV Done (“Export Visible CSV”); PDF still stubbed.
+Enrollment & Class assignment: Year/Section management Done; assignment action pending; class enrollment not yet implemented.
+Attendance Management: Backend Done (staff_attendance API); UI loads and filters; “Save Attendance” submission wiring pending.
+Reports (attendance, enrollment, tuition): Report UI exists; data-backed exports/summaries pending.
+Send Notifications (search/autocomplete/templates): Notifications API exists; Staff notifications page present; autocomplete/templates pending.
+Search bug/JSON parsing: Addressed via guarded JSON parsing patterns.
+Grade Synchronization: Not implemented yet (depends on faculty grade entry plumbing).
+FACULTY MODULE
+My Classes (manage schedule, assign students/subjects): UI present; persistence not wired.
+Gradebook (switch classes, save grades): UI present; persistence not wired; sync to reports pending.
+Assignments (create/upload/submissions): UI present; persistence not wired; status indicators shown.
+Class Attendance: UI present; persistence not wired (teacher side).
+Evaluations: Student-side submits to EvaluationResponseStack Done; Faculty view page present (read-only).
+Class Materials: UI present; persistence not wired.
+Search bug: Guarded.
+Grade synchronization: Not implemented yet.
+STUDENT MODULE
+My Courses: UI present; data currently static; can pull from enrollment.
+My Grades: Done for display (Form 137 view with print); data is mock; sync pending.
+Search bug: Guarded.
+Attendance: Student view present; data mock; can pull from attendance API.
+Tuition Balance: UI present; data mock; staff updates not yet flowing in.
+Teacher’s Evaluation: Student submit Done (API); gating by evaluation window not added yet.
+My Documents: UI present; requests API Done; per-student document persistence not wired.
+EXTRA DATA STRUCTURES ADDED
+DocumentRequestQueue + API: Done (student requests).
+EvaluationResponseStack + API: Done (submissions).
+Persistent Activity/Notifications/SystemLogs: Done (JSON).
+WHAT I’LL TACKLE NEXT (fastest impact)
+Staff
+Add “Assign to Section” action on each student row (persists via enrollment API).
+Wire “Save Attendance” to persist a daily record; show per‑day summary.
+CSV export of all students from API (not just visible).
+Dashboard
+Replace remaining placeholder metrics with live aggregates (attendance summary_today, documents, evaluations, notifications for user).
+Faculty
+Minimal persistence for Gradebook save and Class Attendance; reflect to Student “My Grades” and dashboard stats.
+Student
+Pull course list and attendance from persisted enrollment/attendance; reflect tuition from Staff updates once wired.

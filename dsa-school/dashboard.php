@@ -110,17 +110,41 @@ function get_activity_display_name($action) {
       <h2>Quick Overview</h2>
       <div class="stats-grid">
         <?php if ($userRole === 'Administrator'): ?>
+          <?php
+          $allUsers = read_users();
+          
+          $studentsFile = __DIR__ . '/api/data/students.json';
+          $allStudentsData = [];
+          if (file_exists($studentsFile)) {
+            $studentsRaw = @file_get_contents($studentsFile);
+            $allStudentsData = json_decode($studentsRaw ?: '[]', true) ?: [];
+          }
+          
+          $studentEmails = [];
+          foreach ($allStudentsData as $s) {
+            $studentEmails[strtolower($s['email'] ?? '')] = true;
+          }
+          foreach ($allUsers as $u) {
+            if (($u['role'] ?? '') === 'Student') {
+              $e = strtolower($u['email'] ?? '');
+              if (!isset($studentEmails[$e])) {
+                $allStudentsData[] = $u;
+              }
+            }
+          }
+          $totalStudents = count($allStudentsData);
+          ?>
           <div class="stat-item">
             <div class="stat-icon">👥</div>
             <div class="stat-content">
-              <h3><?php $allUsers = read_users(); echo count($allUsers); ?></h3>
+              <h3><?= count($allUsers) ?></h3>
               <p>Total Users</p>
             </div>
           </div>
           <div class="stat-item">
             <div class="stat-icon">👨‍🎓</div>
             <div class="stat-content">
-              <h3><?php echo count(array_filter($allUsers, fn($u) => ($u['role'] ?? '') === 'Student')); ?></h3>
+              <h3><?= $totalStudents ?></h3>
               <p>Total Students</p>
             </div>
           </div>
@@ -161,37 +185,52 @@ function get_activity_display_name($action) {
           </div>
         <?php elseif ($userRole === 'Staff'): ?>
           <?php
-          // Get live data for staff dashboard
           $allStudents = [];
           $studentsFile = __DIR__ . '/api/data/students.json';
           if (file_exists($studentsFile)) {
             $studentsRaw = @file_get_contents($studentsFile);
             $allStudents = json_decode($studentsRaw ?: '[]', true) ?: [];
           }
+          
+          $allUsers = read_users();
+          $studentEmails = [];
+          foreach ($allStudents as $s) {
+            $studentEmails[strtolower($s['email'] ?? '')] = true;
+          }
+          foreach ($allUsers as $u) {
+            if (($u['role'] ?? '') === 'Student') {
+              $e = strtolower($u['email'] ?? '');
+              if (!isset($studentEmails[$e])) {
+                $allStudents[] = [
+                  'email' => $u['email'] ?? '',
+                  'enrollment_status' => 'Enrolled',
+                  'tuition_balance' => 0,
+                ];
+              }
+            }
+          }
 
           $enrolledStudents = array_filter($allStudents, fn($s) => ($s['enrollment_status'] ?? '') === 'Enrolled');
           $totalBalance = array_sum(array_column($allStudents, 'tuition_balance'));
-          $avgAttendance = count($allStudents) > 0 ? array_sum(array_column($allStudents, 'attendance_rate')) / count($allStudents) : 0;
 
-          // Get attendance summary for today
-          $attendanceSummary = ['rate' => 0, 'total' => 0];
           $attendanceFile = __DIR__ . '/api/data/attendance.json';
+          $attendanceRecords = [];
           if (file_exists($attendanceFile)) {
             $attendanceRaw = @file_get_contents($attendanceFile);
             $attendanceRecords = json_decode($attendanceRaw ?: '[]', true) ?: [];
-            $todayRecords = array_filter($attendanceRecords, fn($r) => ($r['date'] ?? '') === date('Y-m-d'));
-            $totalToday = 0; $presentToday = 0;
-            foreach ($todayRecords as $record) {
-              foreach (($record['students'] ?? []) as $student) {
-                $totalToday++;
-                if (strtolower($student['status'] ?? '') === 'present') $presentToday++;
-              }
-            }
-            $attendanceSummary['rate'] = $totalToday > 0 ? round(($presentToday / $totalToday) * 100, 1) : 0;
-            $attendanceSummary['total'] = $totalToday;
           }
+          
+          $today = date('Y-m-d');
+          $todayRecs = array_filter($attendanceRecords, fn($r) => (($r['date'] ?? '') === $today));
+          $totalStudents = 0; $present = 0; $late = 0;
+          foreach ($todayRecs as $rec) {
+            $totalStudents++;
+            $status = strtolower($rec['status'] ?? '');
+            if ($status === 'present') $present++;
+            if ($status === 'late') $late++;
+          }
+          $attendanceRate = $totalStudents ? round((($present + $late) / $totalStudents) * 100, 1) : 0;
 
-          // Get user notifications
           $userNotifCount = count($userNotifications);
           ?>
           <div class="stat-item">
@@ -211,7 +250,7 @@ function get_activity_display_name($action) {
           <div class="stat-item">
             <div class="stat-icon">📅</div>
             <div class="stat-content">
-              <h3><?= $attendanceSummary['rate'] ?>%</h3>
+              <h3><?= $attendanceRate ?>%</h3>
               <p>Today's Attendance</p>
             </div>
           </div>
@@ -224,50 +263,68 @@ function get_activity_display_name($action) {
           </div>
         <?php elseif ($userRole === 'Faculty'): ?>
           <?php
-          // Get live data for faculty dashboard
+          $gradesFile = __DIR__ . '/api/data/grades.json';
           $facultyClasses = [];
-          $facultyStudents = [];
-          $pendingGrades = 0;
-          $facultyEvaluations = [];
+          if (file_exists($gradesFile)) {
+            $gradesRaw = @file_get_contents($gradesFile);
+            $gradesData = json_decode($gradesRaw ?: '[]', true) ?: [];
+            $classNames = [];
+            foreach ($gradesData as $grade) {
+              if (isset($grade['class'])) {
+                $classNames[$grade['class']] = true;
+              }
+            }
+            $facultyClasses = array_keys($classNames);
+          }
+          
+          if (empty($facultyClasses)) {
+            $enrollmentFile = __DIR__ . '/api/data/enrollment.json';
+            if (file_exists($enrollmentFile)) {
+              $enrollmentRaw = @file_get_contents($enrollmentFile);
+              $enrollmentData = json_decode($enrollmentRaw ?: '{}', true) ?: [];
+              $yearLevels = $enrollmentData['yearLevels'] ?? [];
+              $facultyClasses = count($yearLevels) > 0 ? $yearLevels : ['10'];
+            } else {
+              $facultyClasses = ['10'];
+            }
+          }
 
-          // Get classes and students assigned to this faculty member
-          // For now, we'll assume faculty teaches 2-4 classes based on their role
-          // In a real system, this would be based on actual class assignments
-          $facultyClasses = ['Mathematics', 'Science', 'English']; // Default subjects
-
-          // Get students in the faculty's classes
           $studentsFile = __DIR__ . '/api/data/students.json';
+          $facultyStudents = [];
           if (file_exists($studentsFile)) {
             $studentsRaw = @file_get_contents($studentsFile);
             $allStudents = json_decode($studentsRaw ?: '[]', true) ?: [];
-            // For now, assume faculty teaches students from grades 7-10
             $facultyStudents = array_filter($allStudents, function($s) {
               $grade = $s['grade_level'] ?? '';
-              return preg_match('/Grade (7|8|9|10)/', $grade);
+              return !empty($grade);
             });
           }
 
-          // Get evaluation responses for this faculty's students
-          $evaluationFile = __DIR__ . '/api/data/evaluations.json';
-          if (file_exists($evaluationFile)) {
-            $evalRaw = @file_get_contents($evaluationFile);
-            $evaluations = json_decode($evalRaw ?: '[]', true) ?: [];
-            $facultyEvaluations = array_filter($evaluations, function($e) use ($facultyStudents) {
-              return in_array(($e['student_id'] ?? ''), array_column($facultyStudents, 'student_id'));
+          $evaluationResponsesFile = __DIR__ . '/api/data/evaluation_responses.json';
+          $facultyEvaluations = [];
+          if (file_exists($evaluationResponsesFile)) {
+            $evalRaw = @file_get_contents($evaluationResponsesFile);
+            $allEvaluations = json_decode($evalRaw ?: '[]', true) ?: [];
+            $facultyEvaluations = array_filter($allEvaluations, function($e) use ($user) {
+              return strtolower($e['teacher_email'] ?? '') === strtolower($user['email']);
             });
           }
 
-          // Calculate average rating from evaluations
           $totalRating = 0;
           $evalCount = count($facultyEvaluations);
           if ($evalCount > 0) {
             foreach ($facultyEvaluations as $eval) {
-              $totalRating += ($eval['rating'] ?? 0);
+              $scores = $eval['scores'] ?? [];
+              if (!empty($scores)) {
+                $totalRating += array_sum($scores) / count($scores);
+              }
             }
             $avgRating = round($totalRating / $evalCount, 1);
           } else {
             $avgRating = 0;
           }
+
+          $pendingGrades = 0;
           ?>
           <div class="stat-item">
             <div class="stat-icon">📚</div>
@@ -299,7 +356,6 @@ function get_activity_display_name($action) {
           </div>
         <?php elseif ($userRole === 'Student'): ?>
           <?php
-          // Get live data for student dashboard
           $studentData = [];
           $enrolledCourses = [];
           $studentAttendance = ['rate' => 0, 'balance' => 0];
@@ -315,16 +371,30 @@ function get_activity_display_name($action) {
             $studentData = reset($studentMatches) ?: [];
 
             if ($studentData) {
-              // For enrolled courses, count based on grade level and assume multiple subjects per grade
-              $gradeLevel = $studentData['grade_level'] ?? '';
-              if ($gradeLevel) {
-                // Assume 6-8 subjects per grade level depending on the level
-                $baseCourses = 6; // Basic subjects
-                if (preg_match('/Grade (\d+)/', $gradeLevel, $matches)) {
-                  $gradeNum = (int)$matches[1];
-                  if ($gradeNum >= 7) $baseCourses = 8; // Higher grades have more subjects
+              $gradesFile = __DIR__ . '/api/data/grades.json';
+              if (file_exists($gradesFile)) {
+                $gradesRaw = @file_get_contents($gradesFile);
+                $gradesData = json_decode($gradesRaw ?: '[]', true) ?: [];
+                $studentCourses = [];
+                foreach ($gradesData as $grade) {
+                  $studentId = $studentData['student_id'] ?? '';
+                  if (($grade['student_id'] ?? '') === $studentId && !empty($grade['subject'] ?? '')) {
+                    $studentCourses[$grade['subject']] = true;
+                  }
                 }
-                $enrolledCourses = range(1, $baseCourses);
+                $enrolledCourses = array_keys($studentCourses);
+              }
+
+              if (empty($enrolledCourses)) {
+                $gradeLevel = $studentData['grade_level'] ?? '';
+                if ($gradeLevel) {
+                  $baseCourses = 6;
+                  if (preg_match('/Grade (\d+)/', $gradeLevel, $matches)) {
+                    $gradeNum = (int)$matches[1];
+                    if ($gradeNum >= 7) $baseCourses = 8;
+                  }
+                  $enrolledCourses = range(1, $baseCourses);
+                }
               }
 
               $studentAttendance = [

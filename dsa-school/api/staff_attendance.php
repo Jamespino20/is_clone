@@ -9,7 +9,7 @@ header('Content-Type: application/json');
 $email = $_SESSION['user_email'] ?? null;
 if (!$email) { echo json_encode(['ok'=>false,'error'=>'Unauthorized']); exit; }
 $actor = get_user_by_email($email);
-if (!$actor || !in_array($actor['role'], ['Staff','Administrator'], true)) { echo json_encode(['ok'=>false,'error'=>'Forbidden']); exit; }
+if (!$actor || !in_array($actor['role'], ['Staff','Administrator','Faculty'], true)) { echo json_encode(['ok'=>false,'error'=>'Forbidden']); exit; }
 
 $file = __DIR__ . '/data/attendance.json';
 if (!is_dir(__DIR__ . '/data')) @mkdir(__DIR__ . '/data', 0775, true);
@@ -38,9 +38,41 @@ switch ($action) {
     $payload = $_POST['payload'] ?? '';
     $data = json_decode($payload, true);
     if (!is_array($data)) { echo json_encode(['ok'=>false,'error'=>'Invalid payload']); break; }
-    // expected: { date, grade_level, section, students: [{student_id,status,remarks}] }
-    $data['saved_by'] = $email;
-    $records[] = $data;
+    
+    $date = $data['date'] ?? '';
+    $grade = $data['grade_level'] ?? '';
+    $section = $data['section'] ?? '';
+    $students = $data['students'] ?? [];
+    
+    if (!$date || !$grade || !$section) {
+        echo json_encode(['ok'=>false,'error'=>'Missing required fields']);
+        break;
+    }
+    
+    // Remove existing records for this date/grade/section to avoid duplicates
+    $records = array_values(array_filter($records, function($r) use ($date, $grade, $section) {
+        return !(
+            ($r['date'] ?? '') === $date && 
+            ($r['grade_level'] ?? '') === $grade && 
+            ($r['section'] ?? '') === $section
+        );
+    }));
+    
+    // Create individual records for each student
+    $timestamp = date('Y-m-d H:i:s');
+    foreach ($students as $student) {
+        $records[] = [
+            'date' => $date,
+            'student_id' => $student['student_id'] ?? '',
+            'grade_level' => $grade,
+            'section' => $section,
+            'status' => $student['status'] ?? 'present',
+            'remarks' => $student['remarks'] ?? '',
+            'recorded_by' => $email,
+            'recorded_at' => $timestamp
+        ];
+    }
+    
     write_att($file, $records);
     echo json_encode(['ok'=>true]);
     break;
@@ -49,14 +81,12 @@ switch ($action) {
     $todayRecs = array_values(array_filter($records, fn($r)=>(($r['date'] ?? '') === $today)));
     $totalStudents = 0; $present = 0; $absent = 0; $late = 0;
     foreach ($todayRecs as $rec) {
-      foreach (($rec['students'] ?? []) as $s) {
         $totalStudents++;
-        switch (strtolower($s['status'] ?? '')) {
-          case 'present': $present++; break;
-          case 'late': $late++; break;
-          case 'absent': $absent++; break;
+        switch (strtolower($rec['status'] ?? '')) {
+            case 'present': $present++; break;
+            case 'late': $late++; break;
+            case 'absent': $absent++; break;
         }
-      }
     }
     $rate = $totalStudents ? round((($present+$late)/$totalStudents)*100, 1) : 0;
     echo json_encode(['ok'=>true,'summary'=>['total'=>$totalStudents,'present'=>$present,'late'=>$late,'absent'=>$absent,'rate'=>$rate]]);

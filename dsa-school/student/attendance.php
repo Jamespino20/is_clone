@@ -16,78 +16,50 @@ if (!$user || $user['role'] !== 'Student') {
     exit;
 }
 
-// Sample attendance data - in a real system, this would come from a database
-$attendance = [
-    'MATH101' => [
-        'subject' => 'Mathematics',
-        'instructor' => 'Dr. Maria Santos',
-        'schedule' => 'MWF 9:00-10:00 AM',
-        'records' => [
-            ['date' => '2024-01-15', 'time' => '09:05', 'status' => 'Late', 'minutes_late' => 5],
-            ['date' => '2024-01-17', 'time' => '08:55', 'status' => 'Present', 'minutes_late' => 0],
-            ['date' => '2024-01-19', 'time' => '09:15', 'status' => 'Late', 'minutes_late' => 15],
-            ['date' => '2024-01-22', 'time' => '09:00', 'status' => 'Present', 'minutes_late' => 0],
-            ['date' => '2024-01-24', 'time' => '09:20', 'status' => 'Late', 'minutes_late' => 20],
-            ['date' => '2024-01-26', 'time' => null, 'status' => 'Absent', 'minutes_late' => null],
-        ]
-    ],
-    'ENG101' => [
-        'subject' => 'English',
-        'instructor' => 'Prof. John Cruz',
-        'schedule' => 'TTH 10:30-12:00 PM',
-        'records' => [
-            ['date' => '2024-01-16', 'time' => '10:30', 'status' => 'Present', 'minutes_late' => 0],
-            ['date' => '2024-01-18', 'time' => '10:35', 'status' => 'Late', 'minutes_late' => 5],
-            ['date' => '2024-01-23', 'time' => '10:30', 'status' => 'Present', 'minutes_late' => 0],
-            ['date' => '2024-01-25', 'time' => '10:45', 'status' => 'Late', 'minutes_late' => 15],
-        ]
+// Fetch attendance records from API
+$attendanceUrl = 'http://localhost:5000/api/student_data.php?action=attendance';
+$attendanceContext = stream_context_create([
+    'http' => [
+        'method' => 'GET',
+        'header' => 'Cookie: ' . session_name() . '=' . session_id()
     ]
-];
+]);
+$attendanceResponse = @file_get_contents($attendanceUrl, false, $attendanceContext);
+$attendanceData = json_decode($attendanceResponse ?: '{}', true);
+$attendanceRecords = $attendanceData['attendance'] ?? [];
+
+// Group attendance by section (class)
+$attendanceBySectionArray = [];
+foreach ($attendanceRecords as $record) {
+    $section = $record['section'] ?? 'Unknown';
+    if (!isset($attendanceBySectionArray[$section])) {
+        $attendanceBySectionArray[$section] = [];
+    }
+    $attendanceBySectionArray[$section][] = $record;
+}
 
 // Calculate attendance statistics
-$totalClasses = 0;
+$totalClasses = count($attendanceRecords);
 $totalPresent = 0;
 $totalLate = 0;
 $totalAbsent = 0;
 
-foreach ($attendance as $subjectData) {
-    foreach ($subjectData['records'] as $record) {
-        $totalClasses++;
-        switch ($record['status']) {
-            case 'Present':
-                $totalPresent++;
-                break;
-            case 'Late':
-                $totalLate++;
-                break;
-            case 'Absent':
-                $totalAbsent++;
-                break;
-        }
+foreach ($attendanceRecords as $record) {
+    $status = strtolower($record['status'] ?? '');
+    switch ($status) {
+        case 'present':
+            $totalPresent++;
+            break;
+        case 'late':
+            $totalLate++;
+            break;
+        case 'absent':
+            $totalAbsent++;
+            break;
     }
 }
 
 $attendanceRate = $totalClasses > 0 ? (($totalPresent + $totalLate) / $totalClasses) * 100 : 0;
-
-// Handle attendance marking
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'mark_attendance') {
-    $subject = $_POST['subject'] ?? '';
-    $time = $_POST['time'] ?? '';
-    $status = $_POST['status'] ?? '';
-    $minutesLate = (int)($_POST['minutes_late'] ?? 0);
-    
-    if ($subject && $time && $status) {
-        // In a real system, this would save to database
-        // For now, we'll just return success
-        header('Content-Type: application/json');
-        echo json_encode(['success' => true, 'message' => 'Attendance recorded successfully']);
-        exit;
-    } else {
-        header('Content-Type: application/json');
-        echo json_encode(['success' => false, 'message' => 'Missing required data']);
-        exit;
-    }
-}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -109,7 +81,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'mark_
     ?>
 
     <main class="container">
-        <!-- Attendance Summary -->
         <section class="card">
             <h2>Attendance Summary</h2>
             <div class="stats-grid">
@@ -144,117 +115,75 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'mark_
             </div>
         </section>
 
-        <!-- Attendance by Subject -->
-        <?php foreach ($attendance as $subjectCode => $subjectData): ?>
-        <section class="card">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <div>
-                    <h2><?= htmlspecialchars($subjectData['subject']) ?></h2>
-                    <p class="text-muted mb-0">
-                        <strong>Instructor:</strong> <?= htmlspecialchars($subjectData['instructor']) ?> | 
-                        <strong>Schedule:</strong> <?= htmlspecialchars($subjectData['schedule']) ?>
-                    </p>
+        <?php if (empty($attendanceRecords)): ?>
+            <section class="card">
+                <div class="alert alert-info">
+                    <p class="mb-0">No attendance records found. Your attendance will appear here once recorded by faculty.</p>
                 </div>
-                <button class="btn btn-outline-primary" onclick="markAttendance('<?= $subjectCode ?>')">
-                    📝 Mark Attendance
-                </button>
-            </div>
-            
-            <div class="table-responsive">
-                <table class="table table-striped">
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Time</th>
-                            <th>Status</th>
-                            <th>Minutes Late</th>
-                            <th>Remarks</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($subjectData['records'] as $record): ?>
-                        <tr>
-                            <td><?= date('M j, Y', strtotime($record['date'])) ?></td>
-                            <td>
-                                <?php if ($record['time']): ?>
-                                    <?= date('g:i A', strtotime($record['time'])) ?>
-                                <?php else: ?>
-                                    <span class="text-muted">-</span>
-                                <?php endif; ?>
-                            </td>
-                            <td>
-                                <?php
-                                $badgeClass = match($record['status']) {
-                                    'Present' => 'bg-success',
-                                    'Late' => 'bg-warning',
-                                    'Absent' => 'bg-danger',
-                                    default => 'bg-secondary'
-                                };
-                                ?>
-                                <span class="badge <?= $badgeClass ?>"><?= $record['status'] ?></span>
-                            </td>
-                            <td>
-                                <?php if ($record['minutes_late'] !== null): ?>
-                                    <?php if ($record['minutes_late'] > 0): ?>
-                                        <span class="text-warning"><?= $record['minutes_late'] ?> min</span>
+            </section>
+        <?php else: ?>
+            <?php foreach ($attendanceBySectionArray as $section => $records): ?>
+            <section class="card">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <h2><?= htmlspecialchars($section) ?></h2>
+                        <p class="text-muted mb-0">
+                            <strong>Total Records:</strong> <?= count($records) ?>
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Grade Level</th>
+                                <th>Status</th>
+                                <th>Remarks</th>
+                                <th>Recorded By</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($records as $record): ?>
+                            <tr>
+                                <td><?= date('M j, Y', strtotime($record['date'] ?? 'now')) ?></td>
+                                <td><?= htmlspecialchars($record['grade_level'] ?? 'N/A') ?></td>
+                                <td>
+                                    <?php
+                                    $status = ucfirst(strtolower($record['status'] ?? 'Unknown'));
+                                    $badgeClass = match(strtolower($record['status'] ?? '')) {
+                                        'present' => 'bg-success',
+                                        'late' => 'bg-warning',
+                                        'absent' => 'bg-danger',
+                                        default => 'bg-secondary'
+                                    };
+                                    ?>
+                                    <span class="badge <?= $badgeClass ?>"><?= $status ?></span>
+                                </td>
+                                <td>
+                                    <?php if (!empty($record['remarks'])): ?>
+                                        <?= htmlspecialchars($record['remarks']) ?>
                                     <?php else: ?>
-                                        <span class="text-success">On time</span>
+                                        <span class="text-muted">-</span>
                                     <?php endif; ?>
-                                <?php else: ?>
-                                    <span class="text-muted">-</span>
-                                <?php endif; ?>
-                            </td>
-                            <td>
-                                <?php if ($record['status'] === 'Late' && $record['minutes_late'] > 15): ?>
-                                    <span class="text-danger">Excessive tardiness</span>
-                                <?php elseif ($record['status'] === 'Late' && $record['minutes_late'] <= 5): ?>
-                                    <span class="text-info">Minor delay</span>
-                                <?php elseif ($record['status'] === 'Absent'): ?>
-                                    <span class="text-danger">No excuse provided</span>
-                                <?php else: ?>
-                                    <span class="text-success">Good attendance</span>
-                                <?php endif; ?>
-                            </td>
-                        </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
-            </div>
-        </section>
-        <?php endforeach; ?>
-
-        <!-- Attendance Policy -->
-        <section class="card">
-            <h2>Attendance Policy</h2>
-            <div class="row">
-                <div class="col-md-6">
-                    <h4>Time Ranges</h4>
-                    <ul class="list-unstyled">
-                        <li><span class="badge bg-success me-2">Present</span> On time or within 5 minutes</li>
-                        <li><span class="badge bg-warning me-2">Late</span> 6-15 minutes after class start</li>
-                        <li><span class="badge bg-danger me-2">Absent</span> More than 15 minutes late or no show</li>
-                    </ul>
+                                </td>
+                                <td><small><?= htmlspecialchars($record['recorded_by'] ?? 'N/A') ?></small></td>
+                            </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
                 </div>
-                <div class="col-md-6">
-                    <h4>Consequences</h4>
-                    <ul class="list-unstyled">
-                        <li>• 3 consecutive absences = Parent notification</li>
-                        <li>• 5 total absences = Academic warning</li>
-                        <li>• 10 total absences = Possible course failure</li>
-                        <li>• Excessive tardiness affects participation grade</li>
-                    </ul>
-                </div>
-            </div>
-        </section>
+            </section>
+            <?php endforeach; ?>
+        <?php endif; ?>
     </main>
 
-    <!-- Dark Mode Toggle -->
     <div class="dark-mode-toggle" onclick="toggleDarkMode()">
         <span id="darkModeIcon">🌙</span>
     </div>
 
     <script>
-        // Dark mode functionality
         function toggleDarkMode() {
             const body = document.body;
             const icon = document.getElementById('darkModeIcon');
@@ -270,7 +199,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'mark_
             }
         }
         
-        // Load dark mode preference
         document.addEventListener('DOMContentLoaded', function() {
             const darkMode = localStorage.getItem('darkMode');
             if (darkMode === 'true') {
@@ -278,92 +206,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'mark_
                 document.getElementById('darkModeIcon').textContent = '☀️';
             }
         });
-
-        function markAttendance(subjectCode) {
-            const now = new Date();
-            const currentTime = now.toLocaleTimeString('en-US', { 
-                hour12: true, 
-                hour: 'numeric', 
-                minute: '2-digit' 
-            });
-            
-            // Check if it's within class time (basic validation)
-            const currentHour = now.getHours();
-            const currentMinute = now.getMinutes();
-            
-            // Define class schedules (in 24-hour format)
-            const classSchedules = {
-                'MATH101': { start: 9, end: 10, days: [1, 3, 5] }, // MWF 9:00-10:00 AM
-                'ENG101': { start: 10.5, end: 12, days: [2, 4] }   // TTH 10:30-12:00 PM
-            };
-            
-            const schedule = classSchedules[subjectCode];
-            const currentDay = now.getDay(); // 0 = Sunday, 1 = Monday, etc.
-            
-            if (!schedule) {
-                alert('Invalid subject code.');
-                return;
-            }
-            
-            // Check if it's the right day
-            if (!schedule.days.includes(currentDay)) {
-                alert(`Today is not a scheduled day for ${subjectCode}.`);
-                return;
-            }
-            
-            // Check if it's within class time (with 15-minute grace period)
-            const classStart = schedule.start * 60; // Convert to minutes
-            const classEnd = schedule.end * 60;
-            const currentMinutes = currentHour * 60 + currentMinute;
-            const gracePeriod = 15; // 15 minutes grace period
-            
-            if (currentMinutes < classStart - gracePeriod || currentMinutes > classEnd + gracePeriod) {
-                alert(`It's not the right time for ${subjectCode}. Class is from ${schedule.start}:00 to ${schedule.end}:00.`);
-                return;
-            }
-            
-            // Calculate if student is late
-            const isLate = currentMinutes > classStart;
-            const minutesLate = isLate ? currentMinutes - classStart : 0;
-            
-            let status = 'Present';
-            if (minutesLate > 15) {
-                status = 'Absent';
-            } else if (minutesLate > 0) {
-                status = 'Late';
-            }
-            
-            const message = `Mark your attendance for ${subjectCode}?\n\n` +
-                          `Time: ${currentTime}\n` +
-                          `Status: ${status}\n` +
-                          (minutesLate > 0 ? `Minutes Late: ${minutesLate}\n` : '') +
-                          `\nThis will be recorded in your attendance record.`;
-            
-            if (confirm(message)) {
-                // Simulate API call
-                fetch('attendance.php', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: `action=mark_attendance&subject=${subjectCode}&time=${currentTime}&status=${status}&minutes_late=${minutesLate}`
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        alert(`✅ Attendance marked successfully!\n\nSubject: ${subjectCode}\nTime: ${currentTime}\nStatus: ${status}`);
-                        // Reload the page to show updated attendance
-                        setTimeout(() => location.reload(), 1000);
-                    } else {
-                        alert('❌ Failed to mark attendance. Please try again.');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('❌ An error occurred. Please try again.');
-                });
-            }
-        }
     </script>
+
+    <style>
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-item {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .stat-icon {
+            font-size: 2rem;
+        }
+        
+        .stat-content h3 {
+            font-size: 2rem;
+            margin: 0;
+            color: var(--color-accent);
+        }
+        
+        .stat-content p {
+            margin: 0;
+            color: var(--color-muted);
+            font-size: 0.9rem;
+        }
+    </style>
 </body>
 </html>

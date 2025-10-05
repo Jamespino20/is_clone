@@ -1,1 +1,22 @@
-[]
+[
+    {
+        "date": "2025-10-05",
+        "student_id": "espino.jamesbryant20+student@gmail.com",
+        "grade_level": "10",
+        "section": "Mathematics - Grade 10",
+        "status": "present",
+        "remarks": "Almost late",
+        "recorded_by": "espino.jamesbryant20+faculty@gmail.com",
+        "recorded_at": "2025-10-05 22:09:10"
+    },
+    {
+        "date": "2025-10-05",
+        "student_id": "espino.jamesbryant20+student2@gmail.com",
+        "grade_level": "10",
+        "section": "Mathematics - Grade 10",
+        "status": "present",
+        "remarks": "Right on time as always",
+        "recorded_by": "espino.jamesbryant20+faculty@gmail.com",
+        "recorded_at": "2025-10-05 22:09:10"
+    }
+]

@@ -1,0 +1,74 @@
+[
+    {
+        "student_id": "2024-001",
+        "student_name": "Juan Dela Cruz",
+        "class": "Mathematics - Grade 10",
+        "quarter": "Q2",
+        "prelim_grade": 85,
+        "midterm_grade": 90,
+        "finals_grade": 0,
+        "average": 61,
+        "faculty_email": "espino.jamesbryant20+faculty@gmail.com",
+        "updated_at": "2025-10-05 21:52:31"
+    },
+    {
+        "student_id": "2024-002",
+        "student_name": "Maria Santos",
+        "class": "Mathematics - Grade 10",
+        "quarter": "Q2",
+        "prelim_grade": 92,
+        "midterm_grade": 95,
+        "finals_grade": 0,
+        "average": 65.3,
+        "faculty_email": "espino.jamesbryant20+faculty@gmail.com",
+        "updated_at": "2025-10-05 21:52:31"
+    },
+    {
+        "student_id": "2024-003",
+        "student_name": "Pedro Rodriguez",
+        "class": "Mathematics - Grade 10",
+        "quarter": "Q2",
+        "prelim_grade": 78,
+        "midterm_grade": 75,
+        "finals_grade": 0,
+        "average": 53.7,
+        "faculty_email": "espino.jamesbryant20+faculty@gmail.com",
+        "updated_at": "2025-10-05 21:52:31"
+    },
+    {
+        "student_id": "2024-001",
+        "student_name": "Juan Dela Cruz",
+        "class": "Mathematics - Grade 10",
+        "quarter": "Q1",
+        "prelim_grade": 85,
+        "midterm_grade": 88,
+        "finals_grade": 90,
+        "average": 87.4,
+        "faculty_email": "espino.jamesbryant20+faculty@gmail.com",
+        "updated_at": "2025-10-05 21:52:58"
+    },
+    {
+        "student_id": "2024-002",
+        "student_name": "Maria Santos",
+        "class": "Mathematics - Grade 10",
+        "quarter": "Q1",
+        "prelim_grade": 92,
+        "midterm_grade": 95,
+        "finals_grade": 90,
+        "average": 92.3,
+        "faculty_email": "espino.jamesbryant20+faculty@gmail.com",
+        "updated_at": "2025-10-05 21:52:58"
+    },
+    {
+        "student_id": "2024-003",
+        "student_name": "Pedro Rodriguez",
+        "class": "Mathematics - Grade 10",
+        "quarter": "Q1",
+        "prelim_grade": 78,
+        "midterm_grade": 75,
+        "finals_grade": 65,
+        "average": 73.2,
+        "faculty_email": "espino.jamesbryant20+faculty@gmail.com",
+        "updated_at": "2025-10-05 21:52:58"
+    }
+]

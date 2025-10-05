@@ -210,7 +210,13 @@ if (!$user || !has_permission(get_role_display_name($user['role']), 'Staff')) {
                     student.grade_level === grade && student.section === section
                 );
 
-                renderAttendanceTable(filteredStudents);
+                // Load existing attendance records for this date/grade/section
+                const attResponse = await fetch(`../api/staff_attendance.php?action=list&date=${date}&grade=${encodeURIComponent(grade)}&section=${encodeURIComponent(section)}`);
+                const attData = await attResponse.json();
+                
+                const existingRecords = attData.ok ? attData.items : [];
+                
+                renderAttendanceTable(filteredStudents, existingRecords);
                 document.getElementById('attendanceSection').style.display = 'block';
 
             } catch (error) {
@@ -218,18 +224,31 @@ if (!$user || !has_permission(get_role_display_name($user['role']), 'Staff')) {
             }
         }
 
-        function renderAttendanceTable(students) {
+        function renderAttendanceTable(students, existingRecords = []) {
             const tbody = document.getElementById('attendanceTableBody');
-            tbody.innerHTML = students.map(student => `
-                <tr data-student-id="${student.student_id}">
-                    <td>${student.student_id}</td>
-                    <td>${student.name}</td>
-                    <td><input type="radio" name="status_${student.student_id}" value="present" checked></td>
-                    <td><input type="radio" name="status_${student.student_id}" value="late"></td>
-                    <td><input type="radio" name="status_${student.student_id}" value="absent"></td>
-                    <td><input type="text" class="form-control" placeholder="Optional remarks"></td>
-                </tr>
-            `).join('');
+            
+            // Create a map of existing records by student_id for quick lookup
+            const recordsMap = {};
+            existingRecords.forEach(record => {
+                recordsMap[record.student_id] = record;
+            });
+            
+            tbody.innerHTML = students.map(student => {
+                const existing = recordsMap[student.student_id];
+                const status = existing ? existing.status : 'present';
+                const remarks = existing ? (existing.remarks || '') : '';
+                
+                return `
+                    <tr data-student-id="${student.student_id}">
+                        <td>${student.student_id}</td>
+                        <td>${student.name}</td>
+                        <td><input type="radio" name="status_${student.student_id}" value="present" ${status === 'present' ? 'checked' : ''}></td>
+                        <td><input type="radio" name="status_${student.student_id}" value="late" ${status === 'late' ? 'checked' : ''}></td>
+                        <td><input type="radio" name="status_${student.student_id}" value="absent" ${status === 'absent' ? 'checked' : ''}></td>
+                        <td><input type="text" class="form-control" placeholder="Optional remarks" value="${remarks}"></td>
+                    </tr>
+                `;
+            }).join('');
         }
 
         async function saveAttendance() {

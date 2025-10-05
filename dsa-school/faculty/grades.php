@@ -16,11 +16,28 @@ if (!$user || !has_permission(get_role_display_name($user['role']), 'Faculty')) 
     exit;
 }
 
-$students = [
-    ['id' => 1, 'name' => 'Juan Dela Cruz', 'student_id' => '2024-001', 'prelim' => 85, 'midterm' => 88, 'finals' => 0],
-    ['id' => 2, 'name' => 'Maria Santos', 'student_id' => '2024-002', 'prelim' => 92, 'midterm' => 95, 'finals' => 0],
-    ['id' => 3, 'name' => 'Pedro Rodriguez', 'student_id' => '2024-003', 'prelim' => 78, 'midterm' => 75, 'finals' => 0]
-];
+$usersFile = __DIR__ . '/../api/data/users.json';
+$allUsers = [];
+if (file_exists($usersFile)) {
+    $raw = @file_get_contents($usersFile);
+    $allUsers = json_decode($raw ?: '[]', true) ?: [];
+}
+
+$students = [];
+$studentCounter = 1;
+foreach ($allUsers as $u) {
+    if (($u['role'] ?? '') === 'Student') {
+        $students[] = [
+            'id' => $studentCounter++,
+            'name' => $u['name'] ?? '',
+            'email' => $u['email'] ?? '',
+            'student_id' => sprintf('2024-%03d', $studentCounter - 1),
+            'prelim' => 0,
+            'midterm' => 0,
+            'finals' => 0
+        ];
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -46,10 +63,16 @@ $students = [
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h2>Grade Entry</h2>
                 <div>
-                    <select class="form-control d-inline-block w-auto me-2">
+                    <select id="classSelector" class="form-control d-inline-block w-auto me-2" onchange="loadGrades()">
                         <option>Mathematics - Grade 10</option>
                         <option>Science - Grade 10</option>
                         <option>English - Grade 10</option>
+                    </select>
+                    <select id="quarterSelector" class="form-control d-inline-block w-auto me-2" onchange="loadGrades()">
+                        <option value="Q1">Quarter 1</option>
+                        <option value="Q2">Quarter 2</option>
+                        <option value="Q3">Quarter 3</option>
+                        <option value="Q4">Quarter 4</option>
                     </select>
                     <button class="btn btn-success" onclick="submitGrades()">💾 Save All Grades</button>
                 </div>
@@ -68,25 +91,34 @@ $students = [
                             <th>Remarks</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="gradesTableBody">
                         <?php foreach ($students as $student): 
                             $avg = ($student['prelim'] * 0.4) + ($student['midterm'] * 0.3) + ($student['finals'] * 0.3);
                             $remarks = $avg >= 75 ? 'Passed' : ($student['finals'] > 0 ? 'Failed' : 'Pending');
                         ?>
-                        <tr>
+                        <tr data-student-id="<?= htmlspecialchars($student['student_id']) ?>" 
+                            data-student-name="<?= htmlspecialchars($student['name']) ?>"
+                            data-student-email="<?= htmlspecialchars($student['email']) ?>">
                             <td><?= htmlspecialchars($student['student_id']) ?></td>
                             <td><?= htmlspecialchars($student['name']) ?></td>
                             <td>
-                                <input type="number" class="form-control" value="<?= $student['prelim'] ?>" min="0" max="100">
+                                <input type="number" class="form-control grade-input prelim" 
+                                       value="<?= $student['prelim'] ?>" min="0" max="100"
+                                       onchange="updateAverage(this)">
                             </td>
                             <td>
-                                <input type="number" class="form-control" value="<?= $student['midterm'] ?>" min="0" max="100">
+                                <input type="number" class="form-control grade-input midterm" 
+                                       value="<?= $student['midterm'] ?>" min="0" max="100"
+                                       onchange="updateAverage(this)">
                             </td>
                             <td>
-                                <input type="number" class="form-control" value="<?= $student['finals'] ?>" min="0" max="100" placeholder="Not yet graded">
+                                <input type="number" class="form-control grade-input finals" 
+                                       value="<?= $student['finals'] ?>" min="0" max="100" 
+                                       placeholder="Not yet graded"
+                                       onchange="updateAverage(this)">
                             </td>
-                            <td><?= number_format($avg, 2) ?></td>
-                            <td>
+                            <td class="average-cell"><?= number_format($avg, 2) ?></td>
+                            <td class="remarks-cell">
                                 <span class="badge bg-<?= $avg >= 75 ? 'success' : ($student['finals'] > 0 ? 'danger' : 'warning') ?>">
                                     <?= $remarks ?>
                                 </span>
@@ -162,11 +194,113 @@ $students = [
             }
         });
 
-        function submitGrades() {
-            if (confirm('Save all grades? This will finalize the entries.')) {
-                alert('Grades saved successfully!');
+        function updateAverage(input) {
+            const row = input.closest('tr');
+            const prelim = parseFloat(row.querySelector('.prelim').value) || 0;
+            const midterm = parseFloat(row.querySelector('.midterm').value) || 0;
+            const finals = parseFloat(row.querySelector('.finals').value) || 0;
+            
+            const average = (prelim * 0.4) + (midterm * 0.3) + (finals * 0.3);
+            const avgCell = row.querySelector('.average-cell');
+            const remarksCell = row.querySelector('.remarks-cell');
+            
+            avgCell.textContent = average.toFixed(2);
+            
+            const passed = average >= 75;
+            const pending = finals === 0;
+            const status = passed ? 'Passed' : (pending ? 'Pending' : 'Failed');
+            const badgeClass = passed ? 'success' : (pending ? 'warning' : 'danger');
+            
+            remarksCell.innerHTML = `<span class="badge bg-${badgeClass}">${status}</span>`;
+        }
+
+        async function loadGrades() {
+            const classSelector = document.getElementById('classSelector');
+            const quarterSelector = document.getElementById('quarterSelector');
+            const selectedClass = classSelector.value;
+            const selectedQuarter = quarterSelector.value;
+            
+            try {
+                const response = await fetch(`../api/grades_api.php?action=get&class=${encodeURIComponent(selectedClass)}&quarter=${encodeURIComponent(selectedQuarter)}`);
+                const result = await response.json();
+                
+                if (result.ok && result.grades) {
+                    const gradesByStudent = {};
+                    result.grades.forEach(grade => {
+                        gradesByStudent[grade.student_id] = grade;
+                    });
+                    
+                    document.querySelectorAll('#gradesTableBody tr').forEach(row => {
+                        const studentId = row.dataset.studentId;
+                        if (gradesByStudent[studentId]) {
+                            const grade = gradesByStudent[studentId];
+                            row.querySelector('.prelim').value = grade.prelim_grade || 0;
+                            row.querySelector('.midterm').value = grade.midterm_grade || 0;
+                            row.querySelector('.finals').value = grade.finals_grade || 0;
+                            updateAverage(row.querySelector('.prelim'));
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading grades:', error);
             }
         }
+
+        async function submitGrades() {
+            if (!confirm('Save all grades? This will finalize the entries.')) {
+                return;
+            }
+            
+            const classSelector = document.getElementById('classSelector');
+            const quarterSelector = document.getElementById('quarterSelector');
+            const selectedClass = classSelector.value;
+            const selectedQuarter = quarterSelector.value;
+            
+            const students = [];
+            document.querySelectorAll('#gradesTableBody tr').forEach(row => {
+                const studentId = row.dataset.studentId;
+                const studentName = row.dataset.studentName;
+                const studentEmail = row.dataset.studentEmail;
+                const prelim = parseFloat(row.querySelector('.prelim').value) || 0;
+                const midterm = parseFloat(row.querySelector('.midterm').value) || 0;
+                const finals = parseFloat(row.querySelector('.finals').value) || 0;
+                
+                students.push({
+                    student_id: studentId,
+                    student_name: studentName,
+                    student_email: studentEmail,
+                    prelim_grade: prelim,
+                    midterm_grade: midterm,
+                    finals_grade: finals
+                });
+            });
+            
+            const formData = new FormData();
+            formData.append('action', 'save');
+            formData.append('class', selectedClass);
+            formData.append('quarter', selectedQuarter);
+            formData.append('students', JSON.stringify(students));
+            
+            try {
+                const response = await fetch('../api/grades_api.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                const result = await response.json();
+                
+                if (result.ok) {
+                    alert(`✅ Grades saved successfully! (${result.saved} records saved)`);
+                } else {
+                    alert('❌ Error: ' + (result.error || 'Failed to save grades'));
+                }
+            } catch (error) {
+                alert('❌ Error: ' + error.message);
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            loadGrades();
+        });
     </script>
 </body>
 </html>
